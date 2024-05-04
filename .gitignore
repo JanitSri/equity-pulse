@@ -39,3 +39,4 @@ profile.out
 # Node tooling
 node_modules/
 
+/data/

@@ -17,3 +17,9 @@
      
     - equity-pulse trending
       - trending tickers 
+      
+    - equity-pulse events
+      - calender events 
+      - potential flags 
+        - start date
+        - end date 
