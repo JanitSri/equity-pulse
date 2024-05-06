@@ -4,9 +4,6 @@ import (
 	"time"
 )
 
-// TODO: maybe create a response object that stores the response and time retrieved, can be used for caching and rate limiting
-//       the cache should be checked at the net level (data provider) not at the service level (still needs to think about this)
-
 type Article struct {
 	title         string
 	summary       string
@@ -94,7 +91,7 @@ func NewArticleBuilder() *ArticleBuilder {
 	return &ArticleBuilder{}
 }
 
-type News = []Article
+type News = []*Article
 
 type CompanyProfile struct {
 	address                 string
