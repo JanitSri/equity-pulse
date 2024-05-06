@@ -6,7 +6,7 @@ build:
 run: build
 	@./bin/${BINARY_NAME}
 
-clean:
+clean: tidy
 	@go clean
 	@rm -rf ./bin
 
@@ -15,3 +15,6 @@ install:
 
 company: install
 	equity-pulse company $(ARGS)
+
+tidy:
+	@go mod tidy
