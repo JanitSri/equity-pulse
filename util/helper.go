@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 )
 
@@ -39,4 +40,18 @@ func FormatDate(date time.Time, timeZone string) string {
 
 	updatedTimeZone := date.In(loc)
 	return updatedTimeZone.Format(time.RFC1123)
+}
+
+func BuildURL(base, path string, params url.Values) (*url.URL, error) {
+	baseURL, err := url.Parse(base)
+	if err != nil {
+		fmt.Println("Error parsing base URL:", err)
+		return nil, err
+	}
+
+	baseURL.Path += path
+
+	baseURL.RawQuery = params.Encode()
+
+	return baseURL, nil
 }

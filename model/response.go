@@ -91,7 +91,7 @@ func NewArticleBuilder() *ArticleBuilder {
 	return &ArticleBuilder{}
 }
 
-type News = []*Article
+type News []*Article
 
 type CompanyProfile struct {
 	address                 string

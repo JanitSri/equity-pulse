@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/JanitSri/equity-pulse/model"
 	"github.com/JanitSri/equity-pulse/net"
 	"github.com/JanitSri/equity-pulse/service"
@@ -14,5 +16,6 @@ func main() {
 	y := net.NewYahooFinanceDataProvider()
 	e := service.NewEquityService(y)
 
-	e.StockTickerInfo(er)
+	t, _ := e.StockTickerInfo(er)
+	fmt.Printf("%+v\n", t)
 }

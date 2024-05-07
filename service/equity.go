@@ -15,20 +15,20 @@ func NewEquityService(stockDataProvider net.StockDataProvider) *EquityService {
 	}
 }
 
-func (e *EquityService) StockNews(er *model.EquityRequest) *model.News {
+func (e *EquityService) StockNews(er *model.EquityRequest) (*model.News, error) {
 	return e.stockDataProvider.RetrieveStockNews(er.Ticker())
 }
-func (e *EquityService) CompanyProfile(er *model.EquityRequest) *model.CompanyProfile {
+func (e *EquityService) CompanyProfile(er *model.EquityRequest) (*model.CompanyProfile, error) {
 	return e.stockDataProvider.RetrieveCompanyProfile(er.Ticker())
 }
-func (e *EquityService) StockStatistics(er *model.EquityRequest) *model.StockStatistics {
+func (e *EquityService) StockStatistics(er *model.EquityRequest) (*model.StockStatistics, error) {
 	return e.stockDataProvider.RetrieveStockStatistics(er.Ticker())
 
 }
-func (e *EquityService) EndOfDayStockPrices(er *model.EquityRequest) *model.EndOfDayPrices {
+func (e *EquityService) EndOfDayStockPrices(er *model.EquityRequest) (*model.EndOfDayPrices, error) {
 	return e.stockDataProvider.RetrieveEndOfDayStockPrices(er.Ticker())
 
 }
-func (e *EquityService) StockTickerInfo(er *model.EquityRequest) *model.TickerInfo {
+func (e *EquityService) StockTickerInfo(er *model.EquityRequest) (*model.TickerInfo, error) {
 	return e.stockDataProvider.RetrieveStockTickerInfo(er.Ticker())
 }
