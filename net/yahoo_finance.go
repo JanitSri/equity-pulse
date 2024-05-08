@@ -83,10 +83,13 @@ func (y *YahooFinanceDataProvider) fetchAndDecode(u *url.URL, method string, tar
 
 	defer res.Body.Close()
 
-	d := json.NewDecoder(res.Body)
-	err = d.Decode(&target)
-	if err != nil {
-		return err
+	// when the response is not needed -- for retrieving the cookie
+	if target != nil {
+		d := json.NewDecoder(res.Body)
+		err = d.Decode(&target)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -96,6 +99,7 @@ func (y *YahooFinanceDataProvider) buildRequest(u *url.URL, m string) *http.Requ
 	h := map[string][]string{
 		"User-Agent": {"Mozilla/5.0 (compatible; MyBot/1.0)"},
 		"Host":       {"query1.finance.yahoo.com"},
+		"Accept":     {"application/json"},
 	}
 
 	return &http.Request{

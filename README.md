@@ -5,8 +5,8 @@
 
 ### TODO 
   - commands
-    - equity-pulse company --ticker AAPL 
-    - equity-pulse company --name AAPL 
+    - equity-pulse stock --ticker AAPL 
+    - equity-pulse stock --name AAPL 
       - requirements for both of these commands 
         - profile 
         - statistics 

@@ -13,8 +13,8 @@ clean: tidy
 install: 
 	@go install	
 
-company: install
-	equity-pulse company $(ARGS)
+stock: install
+	equity-pulse stock $(ARGS)
 
 tidy:
 	@go mod tidy
