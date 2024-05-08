@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 
 	"github.com/JanitSri/equity-pulse/model"
@@ -19,13 +18,10 @@ type YahooFinanceDataProvider struct {
 	cache  cache
 }
 
-func NewYahooFinanceDataProvider() *YahooFinanceDataProvider {
+func NewYahooFinanceDataProvider(client *http.Client) *YahooFinanceDataProvider {
 	// TODO: setup cache
-	c, _ := cookiejar.New(nil)
 	return &YahooFinanceDataProvider{
-		client: &http.Client{
-			Jar: c,
-		},
+		client: client,
 	}
 }
 
