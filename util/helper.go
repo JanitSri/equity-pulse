@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 )
@@ -54,4 +55,8 @@ func BuildURL(base, path string, params url.Values) (*url.URL, error) {
 	baseURL.RawQuery = params.Encode()
 
 	return baseURL, nil
+}
+
+func IsCookieExpired(cookie *http.Cookie) bool {
+	return time.Now().After(cookie.Expires)
 }

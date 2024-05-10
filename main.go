@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"net/http/cookiejar"
+	"os"
 
 	"github.com/JanitSri/equity-pulse/model"
 	"github.com/JanitSri/equity-pulse/net"
@@ -13,16 +13,18 @@ import (
 func main() {
 	// cmd.Execute()
 
-	er := model.NewEquityRequestBuilder().Ticker("AAPL").Build()
+	er := model.NewEquityRequestBuilder().Ticker("RPLT").Build()
 
-	cj, _ := cookiejar.New(nil)
-	c := &http.Client{
-		Jar: cj,
-	}
+	c := &http.Client{}
 	y := net.NewYahooFinanceDataProvider(c)
 
 	e := service.NewEquityService(y)
-	t, _ := e.StockTickerInfo(er)
+	t, err := e.StockTickerInfo(er)
+
+	if err != nil {
+		fmt.Println("<<<ERROR>>>", err)
+		os.Exit(1)
+	}
 
 	fmt.Printf("%+v\n", t)
 }
