@@ -13,7 +13,7 @@ import (
 func main() {
 	// cmd.Execute()
 
-	er := model.NewEquityRequestBuilder().Ticker("RPLT").Build()
+	er := model.NewEquityRequestBuilder().Ticker("AAPL").Build()
 
 	c := &http.Client{}
 	y := net.NewYahooFinanceDataProvider(c)

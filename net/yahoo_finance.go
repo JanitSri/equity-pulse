@@ -1,7 +1,6 @@
 package net
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
@@ -13,8 +12,8 @@ import (
 )
 
 const (
-	baseURL1 = "https://query1.finance.yahoo.com"
-	baseURL2 = "https://query2.finance.yahoo.com"
+	yFQuery1URL = "https://query1.finance.yahoo.com"
+	yFQuery2URL = "https://query2.finance.yahoo.com"
 )
 
 type YahooFinanceDataProvider struct {
@@ -23,7 +22,7 @@ type YahooFinanceDataProvider struct {
 }
 
 func NewYahooFinanceDataProvider(c *http.Client) *YahooFinanceDataProvider {
-	// TODO: setup cache
+	// TODO: implement cache
 	o := cookiejar.Options{
 		PublicSuffixList: publicsuffix.List,
 	}
@@ -60,20 +59,20 @@ func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*mode
 		"amp;region": {"US"},
 	}
 
-	u, _ := util.BuildURL(baseURL1, fmt.Sprintf("/v1/finance/quoteType/%s", ticker), p)
+	u, _ := util.BuildURL(yFQuery1URL, fmt.Sprintf("/v1/finance/quoteType/%s", ticker), p)
 
-	if err := y.verifyCookie(u); err != nil {
-		return nil, err
-	}
+	h := http.Header{}
+	h.Set(util.HostHeader, "query1.finance.yahoo.com")
+	h.Set(util.AcceptHeader, "application/json")
 
-	var q *model.QuoteInfoYahooFinance
-	err := y.fetchAndDecode(u, http.MethodGet, nil, &q)
+	q := &model.QuoteInfoYahooFinance{}
+	err := util.FetchAndDecode(y.client, u, http.MethodGet, h, q)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	if q == nil || len(q.QuoteType.Result) == 0 {
+	if len(q.QuoteType.Result) == 0 {
 		return nil, fmt.Errorf("empty result for QuoteType")
 	}
 
@@ -83,80 +82,26 @@ func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*mode
 	return t, nil
 }
 
-func (y *YahooFinanceDataProvider) fetchAndDecode(u *url.URL, method string, h http.Header, target interface{}) error {
-	req := y.buildRequest(u, method, h)
-
-	res, err := y.client.Do(req)
-	if err != nil {
-		return err
-	}
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("%s returned non-200 status: %d", res.Request.URL.String(), res.StatusCode)
-	}
-
-	defer res.Body.Close()
-
-	d := json.NewDecoder(res.Body)
-	err = d.Decode(target)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (y *YahooFinanceDataProvider) buildRequest(u *url.URL, m string, nH http.Header) *http.Request {
-	h := map[string][]string{
-		userAgentHeader: {"Mozilla/5.0 (compatible; MyBot/1.0)"},
-		hostHeader:      {"query1.finance.yahoo.com"},
-		acceptHeader:    {"application/json"},
-	}
-
-	for k, v := range nH {
-		h[k] = v
-	}
-
-	return &http.Request{
-		URL:    u,
-		Header: h,
-		Method: m,
-	}
-}
-
-func (y *YahooFinanceDataProvider) verifyCookie(iU *url.URL) error {
-	cs := y.client.Jar.Cookies(iU)
-	e := len(cs) == 0
-	for _, cookie := range cs {
-		e = util.IsCookieExpired(cookie)
-		if !e {
-			break
-		}
-	}
-
-	if e {
-		u, err := url.Parse("https://finance.yahoo.com/")
-		if err != nil {
-			return err
-		}
-
-		h := map[string][]string{
-			acceptHeader: {"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"},
-		}
-		r := y.buildRequest(u, http.MethodGet, h)
-		if _, err := y.client.Do(r); err != nil {
-			return err
-		}
-
-		// check if cookie is valid for url
-		if len(y.client.Jar.Cookies(iU)) == 0 {
-			return fmt.Errorf("cookie is not valid for %s", iU)
-		}
-	}
-
-	return nil
-}
-
 func (y *YahooFinanceDataProvider) getCrumb() (string, error) {
-	// TODO: get crumb query parameter
-	return "", nil
+	u, _ := util.BuildURL(yFQuery2URL, "/v1/test/getcrumb", nil)
+
+	h := http.Header{}
+	h.Set(util.AcceptHeader, "*/*")
+	h.Set(util.HostHeader, "query1.finance.yahoo.com")
+
+	var c util.TextBodyResponse
+	if err := util.FetchAndDecode(y.client, u, http.MethodGet, h, &c); err != nil {
+		return "", err
+	}
+
+	return c.Body, nil
+}
+
+func (y *YahooFinanceDataProvider) verifyYahooFinanceCookie(targetUrl *url.URL) error {
+	cu, _ := util.BuildURL("https://finance.yahoo.com", "", nil)
+	if err := util.VerifyCookie(y.client, targetUrl, cu); err != nil {
+		return err
+	}
+
+	return nil
 }
