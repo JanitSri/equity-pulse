@@ -21,8 +21,33 @@ type TextBodyResponse struct {
 	Body string `json:"body"`
 }
 
-func IsCookieExpired(cookie *http.Cookie) bool {
-	return time.Now().After(cookie.Expires)
+func BuildURL(base, path string, params url.Values) (*url.URL, error) {
+	baseURL, err := url.Parse(base)
+	if err != nil {
+		fmt.Println("Error parsing base URL:", err)
+		return nil, err
+	}
+
+	baseURL.Path += path
+
+	baseURL.RawQuery = params.Encode()
+
+	return baseURL, nil
+}
+
+func BuildRequest(u *url.URL, method string, nH http.Header) *http.Request {
+	h := http.Header{}
+	h.Set(UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+
+	for k := range nH {
+		h.Set(k, nH.Get(k))
+	}
+
+	return &http.Request{
+		URL:    u,
+		Header: h,
+		Method: method,
+	}
 }
 
 func FetchAndDecode(c *http.Client, u *url.URL, method string, h http.Header, target interface{}) error {
@@ -77,21 +102,6 @@ func DecodeJSONContentType(r io.Reader, target interface{}) error {
 	return nil
 }
 
-func BuildRequest(u *url.URL, method string, nH http.Header) *http.Request {
-	h := http.Header{}
-	h.Set(UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-
-	for k, _ := range nH {
-		h.Set(k, nH.Get(k))
-	}
-
-	return &http.Request{
-		URL:    u,
-		Header: h,
-		Method: method,
-	}
-}
-
 func VerifyCookie(c *http.Client, targetUrl, cookieUrl *url.URL) error {
 	cs := c.Jar.Cookies(targetUrl)
 	e := len(cs) == 0
@@ -117,4 +127,8 @@ func VerifyCookie(c *http.Client, targetUrl, cookieUrl *url.URL) error {
 	}
 
 	return nil
+}
+
+func IsCookieExpired(cookie *http.Cookie) bool {
+	return time.Now().After(cookie.Expires)
 }

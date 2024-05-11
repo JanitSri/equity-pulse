@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/JanitSri/equity-pulse/model"
+	"github.com/JanitSri/equity-pulse/model/yahoo"
 	"github.com/JanitSri/equity-pulse/util"
 	"golang.org/x/net/publicsuffix"
 )
@@ -65,7 +66,7 @@ func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*mode
 	h.Set(util.HostHeader, "query1.finance.yahoo.com")
 	h.Set(util.AcceptHeader, "application/json")
 
-	q := &model.QuoteInfoYahooFinance{}
+	q := &yahoo.QuoteInfo{}
 	err := util.FetchAndDecode(y.client, u, http.MethodGet, h, q)
 	if err != nil {
 		fmt.Println(err)
