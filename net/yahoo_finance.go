@@ -42,7 +42,45 @@ func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (*model.News
 }
 
 func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model.CompanyProfile, error) {
-	panic("not implemented") // TODO: Implement
+	p := map[string][]string{
+		"formatted": {"true"},
+		"lang":      {"en-US"},
+		"region":    {"US"},
+		"modules":   {"summaryProfile,details"},
+	}
+
+	u, _ := util.BuildURL(yFQuery2URL, fmt.Sprintf("/v10/finance/quoteSummary/%s", ticker), p)
+
+	if err := y.verifyYahooFinanceCookie(u); err != nil {
+		return nil, err
+	}
+
+	c, err := y.getCrumb()
+	if err != nil {
+		return nil, err
+	}
+
+	cr := url.Values{}
+	cr.Add("crumb", c)
+	u.RawQuery += fmt.Sprintf("&%s", cr.Encode())
+
+	h := http.Header{}
+	h.Set(util.HostHeader, "qquery2.finance.yahoo.com")
+	h.Set(util.AcceptHeader, "application/json")
+
+	yc := &yahoo.CompanyProfile{}
+	if err := util.FetchAndDecode(y.client, u, http.MethodGet, h, yc); err != nil {
+		return nil, err
+	}
+
+	if len(yc.QuoteSummary.Result) == 0 {
+		return nil, fmt.Errorf("empty result for Company Profile")
+	}
+
+	r := yc.QuoteSummary.Result[0]
+	cp := model.NewCompanyProfileBuilder().Address(r.SummaryProfile.Address1).City(r.SummaryProfile.City).State(r.SummaryProfile.State).Zip(r.SummaryProfile.Zip).Country(r.SummaryProfile.Country).Phone(r.SummaryProfile.Phone).Website(r.SummaryProfile.Website).Industry(r.SummaryProfile.Industry).Sector(r.SummaryProfile.Sector).LongBusinessSummary(r.SummaryProfile.LongBusinessSummary).FullTimeEmployee(uint32(r.SummaryProfile.FullTimeEmployees)).InvestorRelationWebsite(r.SummaryProfile.IrWebsite).Build()
+
+	return cp, nil
 }
 
 func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*model.StockStatistics, error) {
@@ -55,9 +93,9 @@ func (y *YahooFinanceDataProvider) RetrieveEndOfDayStockPrices(ticker string) (*
 
 func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*model.TickerInfo, error) {
 	p := map[string][]string{
-		"formatted":  {"true"},
-		"amp;lang":   {"en-US"},
-		"amp;region": {"US"},
+		"formatted": {"true"},
+		"lang":      {"en-US"},
+		"region":    {"US"},
 	}
 
 	u, _ := util.BuildURL(yFQuery1URL, fmt.Sprintf("/v1/finance/quoteType/%s", ticker), p)
@@ -67,9 +105,7 @@ func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*mode
 	h.Set(util.AcceptHeader, "application/json")
 
 	q := &yahoo.QuoteInfo{}
-	err := util.FetchAndDecode(y.client, u, http.MethodGet, h, q)
-	if err != nil {
-		fmt.Println(err)
+	if err := util.FetchAndDecode(y.client, u, http.MethodGet, h, q); err != nil {
 		return nil, err
 	}
 

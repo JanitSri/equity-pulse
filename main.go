@@ -10,21 +10,23 @@ import (
 	"github.com/JanitSri/equity-pulse/service"
 )
 
+// TODO: add remove fmt and add logging
+
 func main() {
 	// cmd.Execute()
 
-	er := model.NewEquityRequestBuilder().Ticker("AAPL").Build()
+	er := model.NewEquityRequestBuilder().Ticker("TSLA").Build()
 
 	c := &http.Client{}
 	y := net.NewYahooFinanceDataProvider(c)
 
 	e := service.NewEquityService(y)
-	t, err := e.StockTickerInfo(er)
+	r, err := e.EndOfDayStockPrices(er)
 
 	if err != nil {
 		fmt.Println("<<<ERROR>>>", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("%+v\n", t)
+	fmt.Printf("%+v\n", r)
 }
