@@ -15,13 +15,22 @@ import (
 func main() {
 	// cmd.Execute()
 
-	er := model.NewEquityRequestBuilder().Ticker("TSLA").Build()
+	er := model.NewEquityRequestBuilder().Ticker("AAPL").Build()
 
 	c := &http.Client{}
 	y := net.NewYahooFinanceDataProvider(c)
 
 	e := service.NewEquityService(y)
-	r, err := e.EndOfDayStockPrices(er)
+
+	// start, _ := time.Parse(time.RFC3339, "2024-05-13T00:00:00-04:00")
+	// end, _ := time.Parse(time.RFC3339, "2024-05-18T00:00:00-04:00")
+	// r, err := e.EndOfDayStockPrices(er, start, end)
+
+	// r, err := e.CompanyProfile(er)
+
+	// r, err := e.StockTickerInfo(er)
+
+	r, err := e.StockStatistics(er)
 
 	if err != nil {
 		fmt.Println("<<<ERROR>>>", err)

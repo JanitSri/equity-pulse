@@ -41,4 +41,7 @@ type Result struct {
 	QuoteType                 string               `json:"quoteType"`
 	ShortName                 string               `json:"shortName"`
 	Symbol                    string               `json:"symbol"`
+	Meta                      Meta                 `json:"meta"`
+	Indicators                Indicators           `json:"indicators"`
+	Timestamp                 []UnixTime           `json:"timestamp"`
 }

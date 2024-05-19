@@ -1,5 +1,10 @@
 package yahoo
 
+import (
+	"encoding/json"
+	"time"
+)
+
 type EndOfDay struct {
 	Chart Chart `json:"chart"`
 }
@@ -15,7 +20,7 @@ type Indicators struct {
 }
 
 type AdjClose struct {
-	Adjclose []float64 `json:"adjclose"`
+	Close []float64 `json:"adjclose"`
 }
 
 type Quote struct {
@@ -63,4 +68,18 @@ type TradingPeriod struct {
 	Gmtoffset int64  `json:"gmtoffset"`
 	Start     int64  `json:"start"`
 	Timezone  string `json:"timezone"`
+}
+
+type UnixTime struct {
+	time.Time
+}
+
+func (t *UnixTime) UnmarshalJSON(data []byte) error {
+	var timestamp int64
+	if err := json.Unmarshal(data, &timestamp); err != nil {
+		return err
+	}
+
+	t.Time = time.Unix(timestamp, 0)
+	return nil
 }

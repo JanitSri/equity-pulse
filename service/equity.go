@@ -1,6 +1,8 @@
 package service
 
 import (
+	"time"
+
 	"github.com/JanitSri/equity-pulse/model"
 	"github.com/JanitSri/equity-pulse/net"
 )
@@ -25,8 +27,8 @@ func (e *EquityService) StockStatistics(er *model.EquityRequest) (*model.StockSt
 	return e.stockDataProvider.RetrieveStockStatistics(er.Ticker())
 
 }
-func (e *EquityService) EndOfDayStockPrices(er *model.EquityRequest) (*model.EndOfDayPrices, error) {
-	return e.stockDataProvider.RetrieveEndOfDayStockPrices(er.Ticker())
+func (e *EquityService) EndOfDayStockPrices(er *model.EquityRequest, start, end time.Time) (*model.EndOfDayPrices, error) {
+	return e.stockDataProvider.RetrieveStockPrices(er.Ticker(), start, end, model.Interval1d)
 
 }
 func (e *EquityService) StockTickerInfo(er *model.EquityRequest) (*model.TickerInfo, error) {

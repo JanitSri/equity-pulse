@@ -15,6 +15,10 @@ const (
 	AcceptHeader      = "Accept"
 	HostHeader        = "Host"
 	ContentTypeHeader = "Content-Type"
+
+	ContentTypeJSON = "application/json"
+	ContentTypeText = "text/plain"
+	UserAgent       = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
 
 type TextBodyResponse struct {
@@ -37,7 +41,7 @@ func BuildURL(base, path string, params url.Values) (*url.URL, error) {
 
 func BuildRequest(u *url.URL, method string, nH http.Header) *http.Request {
 	h := http.Header{}
-	h.Set(UserAgentHeader, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+	h.Set(UserAgentHeader, UserAgent)
 
 	for k := range nH {
 		h.Set(k, nH.Get(k))
@@ -67,7 +71,7 @@ func FetchAndDecode(c *http.Client, u *url.URL, method string, h http.Header, ta
 	// target is nil when the decoding is not needed - i.e. retrieving cookie
 	var dErr error
 	if target != nil {
-		if strings.Contains(strings.ToLower(res.Header.Get(ContentTypeHeader)), "text/plain") {
+		if strings.Contains(strings.ToLower(res.Header.Get(ContentTypeHeader)), ContentTypeText) {
 			dErr = DecodeTextContentType(res.Body, target)
 		} else {
 			dErr = DecodeJSONContentType(res.Body, target)

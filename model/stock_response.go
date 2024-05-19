@@ -679,7 +679,7 @@ func NewStockPriceBuilder() *SecurityPriceBuilder {
 	return &SecurityPriceBuilder{}
 }
 
-type EndOfDayPrices = []SecurityPrice
+type EndOfDayPrices = []*SecurityPrice
 
 type TickerInfo struct {
 	symbol    string
