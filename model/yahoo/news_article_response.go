@@ -1,5 +1,7 @@
 package yahoo
 
+import "time"
+
 type Article struct {
 	Assets         []AssetItem    `json:"assets"`
 	Items          []Item         `json:"items"`
@@ -172,20 +174,20 @@ type Schema struct {
 }
 
 type Default struct {
-	Context          string   `json:"@context"`
-	Type             string   `json:"@type"`
-	Author           Author   `json:"author"`
-	Creator          Author   `json:"creator"`
-	DateModified     string   `json:"dateModified"`
-	DatePublished    string   `json:"datePublished"`
-	Description      string   `json:"description"`
-	Headline         string   `json:"headline"`
-	Image            Image    `json:"image"`
-	Keywords         []string `json:"keywords"`
-	MainEntityOfPage string   `json:"mainEntityOfPage"`
-	Provider         Provider `json:"provider"`
-	Publisher        Provider `json:"publisher"`
-	ThumbnailURL     string   `json:"thumbnailUrl"`
+	Context          string    `json:"@context"`
+	Type             string    `json:"@type"`
+	Author           Author    `json:"author"`
+	Creator          Author    `json:"creator"`
+	DateModified     time.Time `json:"dateModified"`
+	DatePublished    time.Time `json:"datePublished"`
+	Description      string    `json:"description"`
+	Headline         string    `json:"headline"`
+	Image            Image     `json:"image"`
+	Keywords         []string  `json:"keywords"`
+	MainEntityOfPage string    `json:"mainEntityOfPage"`
+	Provider         Provider  `json:"provider"`
+	Publisher        Provider  `json:"publisher"`
+	ThumbnailURL     string    `json:"thumbnailUrl"`
 }
 
 type Author struct {

@@ -7,14 +7,14 @@ package net
 //     - current option is use LevelDB
 //     - private struct and fields because will be used at net layer
 
-type connectionConfig struct {
-	connectionString string
-	timeout          int
-	maxRetries       int
+type ConnectionConfig struct {
+	ConnectionString string
+	Timeout          int
+	MaxRetries       int
 }
 
-type cache interface {
-	connect(c connectionConfig) error
+type Cache interface {
+	connect(c ConnectionConfig) error
 	get(key string) (string, error)
 	put(key string) (string, error)
 	delete(key string) error

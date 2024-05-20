@@ -11,6 +11,7 @@ type Article struct {
 	author        string
 	datePublished time.Time
 	dateUpdated   time.Time
+	keywords      []string
 }
 
 func (n *Article) Title() string {
@@ -37,6 +38,10 @@ func (n *Article) DateUpdated() time.Time {
 	return n.dateUpdated
 }
 
+func (n *Article) Keywords() []string {
+	return n.keywords
+}
+
 type ArticleBuilder struct {
 	title         string
 	summary       string
@@ -44,6 +49,7 @@ type ArticleBuilder struct {
 	author        string
 	datePublished time.Time
 	dateUpdated   time.Time
+	keywords      []string
 }
 
 func (n *ArticleBuilder) Title(t string) *ArticleBuilder {
@@ -76,6 +82,11 @@ func (n *ArticleBuilder) DateUpdated(d time.Time) *ArticleBuilder {
 	return n
 }
 
+func (n *ArticleBuilder) Keywords(d []string) *ArticleBuilder {
+	n.keywords = d
+	return n
+}
+
 func (n *ArticleBuilder) Build() *Article {
 	return &Article{
 		title:         n.title,
@@ -84,6 +95,7 @@ func (n *ArticleBuilder) Build() *Article {
 		author:        n.author,
 		datePublished: n.datePublished,
 		dateUpdated:   n.dateUpdated,
+		keywords:      n.keywords,
 	}
 }
 

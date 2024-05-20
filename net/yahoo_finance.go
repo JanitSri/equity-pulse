@@ -3,15 +3,14 @@ package net
 import (
 	"fmt"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
+	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/JanitSri/equity-pulse/model"
 	"github.com/JanitSri/equity-pulse/model/yahoo"
 	"github.com/JanitSri/equity-pulse/util"
-	"golang.org/x/net/publicsuffix"
 )
 
 const (
@@ -19,21 +18,16 @@ const (
 	yFBaseURL       = "finance.yahoo.com"
 	yFQuery1URL     = "query1." + yFBaseURL
 	yFQuery2URL     = "query2." + yFBaseURL
+	yFMediaURL      = "ncp-gw-finance.media.yahoo.com"
 )
+
+type ArticleSet map[string]*model.Article
 
 type YahooFinanceDataProvider struct {
 	client *http.Client
-	cache  cache
 }
 
 func NewYahooFinanceDataProvider(c *http.Client) *YahooFinanceDataProvider {
-	// TODO: implement cache
-	o := cookiejar.Options{
-		PublicSuffixList: publicsuffix.List,
-	}
-	cj, _ := cookiejar.New(&o)
-	c.Jar = cj
-
 	return &YahooFinanceDataProvider{
 		client: c,
 	}
@@ -42,7 +36,100 @@ func NewYahooFinanceDataProvider(c *http.Client) *YahooFinanceDataProvider {
 // TODO: handle errors -> return response and error and let upstream handle it
 
 func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (*model.News, error) {
-	panic("not implemented") // TODO: Implement
+	p := map[string][]string{
+		"count":        {"250"},
+		"namespace":    {"finance"},
+		"snippetCount": {"20"},
+		"id":           {"tickers-all-stream"},
+		"version":      {"v2"},
+		"device":       {"desktop"},
+		"site":         {"finance"},
+		"s":            {ticker},
+		"lang":         {"en-CA"},
+		"region":       {"CA"},
+	}
+
+	u, _ := util.BuildURL(fmt.Sprintf("https://%s", yFMediaURL), "/api/v2/gql/stream_view", p)
+
+	if err := y.verifyYahooFinanceCookie(u); err != nil {
+		return nil, err
+	}
+
+	h := http.Header{}
+	h.Set(util.HostHeader, yFMediaURL)
+	h.Set(util.AcceptHeader, util.ContentTypeJSON)
+
+	cn := &yahoo.CompanyNews{}
+	util.FetchAndDecode(y.client, u, http.MethodGet, h, cn)
+
+	if len(cn.Data.TickerStream.Pagination.Uuids) == 0 {
+		return nil, fmt.Errorf("empty result for company news")
+	}
+
+	r := cn.Data.TickerStream.Pagination.Uuids
+
+	re, err := regexp.Compile(`"id":"([a-f0-9-]+)"`)
+	if err != nil {
+		return nil, err
+	}
+
+	matches := re.FindAllStringSubmatch(r, -1)
+
+	set := make(ArticleSet)
+	for _, match := range matches {
+		set[match[1]] = nil
+	}
+
+	y.retrieveArticle(set)
+
+	n := make(model.News, 0, len(set))
+	for _, v := range set {
+		n = append(n, v)
+	}
+
+	return &n, nil
+}
+
+func (y *YahooFinanceDataProvider) retrieveArticle(s ArticleSet) error {
+	p := map[string][]string{
+		"device": {"desktop"},
+		"site":   {"finance"},
+		"lang":   {"en-CA"},
+		"region": {"CA"},
+		"bot":    {"0"},
+	}
+
+	u, _ := util.BuildURL(fmt.Sprintf("https://%s", yFBaseURL), "/caas/content/article", p)
+
+	if err := y.verifyYahooFinanceCookie(u); err != nil {
+		return err
+	}
+
+	h := http.Header{}
+	h.Set(util.HostHeader, yFMediaURL)
+	h.Set(util.AcceptHeader, util.ContentTypeJSON)
+
+	for uuid := range s {
+		fmt.Println("Retrieving article uuid", uuid)
+		cr := u.Query()
+		cr.Del("uuid")
+		cr.Add("uuid", uuid)
+		u.RawQuery = cr.Encode()
+
+		ya := &yahoo.Article{}
+		util.FetchAndDecode(y.client, u, http.MethodGet, h, ya)
+
+		if len(ya.Items) == 0 {
+			fmt.Println("no data for article uuid", uuid)
+			continue
+		}
+
+		r := ya.Items[0]
+		a := model.NewArticleBuilder().Title(r.Schema.Default.Headline).Summary(r.Schema.Default.Description).Url(r.Schema.Default.MainEntityOfPage).DatePublished(r.Schema.Default.DatePublished).DateUpdated(r.Schema.Default.DateModified).Keywords(r.Schema.Default.Keywords).Build()
+		s[uuid] = a
+	}
+
+	return nil
 }
 
 func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model.CompanyProfile, error) {
@@ -64,9 +151,9 @@ func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model
 		return nil, err
 	}
 
-	cr := url.Values{}
+	cr := u.Query()
 	cr.Add("crumb", c)
-	u.RawQuery += fmt.Sprintf("&%s", cr.Encode())
+	u.RawQuery = cr.Encode()
 
 	h := http.Header{}
 	h.Set(util.HostHeader, yFQuery2URL)
@@ -106,9 +193,9 @@ func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*mode
 		return nil, err
 	}
 
-	cr := url.Values{}
+	cr := u.Query()
 	cr.Add("crumb", c)
-	u.RawQuery += fmt.Sprintf("&%s", cr.Encode())
+	u.RawQuery = cr.Encode()
 
 	h := http.Header{}
 	h.Set(util.HostHeader, yFQuery2URL)
