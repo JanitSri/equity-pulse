@@ -78,7 +78,7 @@ func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model
 	}
 
 	if len(yc.QuoteSummary.Result) == 0 {
-		return nil, fmt.Errorf("empty result for Company Profile")
+		return nil, fmt.Errorf("empty result for company profile")
 	}
 
 	r := yc.QuoteSummary.Result[0]
@@ -88,7 +88,42 @@ func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model
 }
 
 func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*model.StockStatistics, error) {
-	panic("not implemented") // TODO: Implement
+	p := map[string][]string{
+		"formatted": {"true"},
+		"lang":      {"en-CA"},
+		"region":    {"CA"},
+		"modules":   {"defaultKeyStatistics,financialData"},
+	}
+
+	u, _ := util.BuildURL(fmt.Sprintf("https://%s", yFQuery2URL), fmt.Sprintf("/v10/finance/quoteSummary/%s", ticker), p)
+
+	if err := y.verifyYahooFinanceCookie(u); err != nil {
+		return nil, err
+	}
+
+	c, err := y.getCrumb()
+	if err != nil {
+		return nil, err
+	}
+
+	cr := url.Values{}
+	cr.Add("crumb", c)
+	u.RawQuery += fmt.Sprintf("&%s", cr.Encode())
+
+	h := http.Header{}
+	h.Set(util.HostHeader, yFQuery2URL)
+	h.Set(util.AcceptHeader, util.ContentTypeJSON)
+
+	cs := &yahoo.CompanyStatistics{}
+	util.FetchAndDecode(y.client, u, http.MethodGet, h, cs)
+
+	if len(cs.QuoteSummary.Result) == 0 {
+		return nil, fmt.Errorf("empty result for company statistics")
+	}
+
+	r := cs.QuoteSummary.Result[0].DefaultKeyStatistics
+	s := model.NewStockStatisticsBuilder().FiftyTwoWeekChange(r.FiftyTwoWeekChange.Fmt).Beta(r.Beta.Fmt).BookValue(r.BookValue.Fmt).EnterpriseToEbitda(r.EnterpriseToEbitda.Fmt).EnterpriseToRevenue(r.EnterpriseToRevenue.Fmt).EnterpriseValue(r.EnterpriseValue.Fmt).FiveYearAverageReturn(r.FiveYearAverageReturn.Fmt).FloatShares(r.FloatShares.Fmt).ForwardEps(r.ForwardEps.Fmt).ForwardPE(r.ForwardPE.Fmt).HeldPercentInsiders(r.HeldPercentInsiders.Fmt).HeldPercentInstitutions(r.HeldPercentInstitutions.Fmt).ImpliedSharesOutstanding(r.ImpliedSharesOutstanding.Fmt).LastDividendDate(r.LastDividendDate.Fmt).LastDividendValue(r.LastDividendValue.Fmt).NetIncomeToCommon(r.NetIncomeToCommon.Fmt).PegRatio(r.PegRatio.Fmt).PriceToBook(r.PriceToBook.Fmt).ProfitMargins(r.ProfitMargins.Fmt).RevenueQuarterlyGrowth(r.RevenueQuarterlyGrowth.Fmt).SharesOutstanding(r.SharesOutstanding.Fmt).SharesShort(r.SharesShort.Fmt).ShortRatio(r.ShortRatio.Fmt).TotalAssets(r.TotalAssets.Fmt).TrailingEps(r.TrailingEps.Fmt).Yield(r.Yield.Fmt).YtdReturn(r.YtdReturn.Fmt).Build()
+	return s, nil
 }
 
 func (y *YahooFinanceDataProvider) RetrieveStockPrices(ticker string, start, end time.Time, interval model.Interval) (*model.EndOfDayPrices, error) {
@@ -158,7 +193,7 @@ func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*mode
 	}
 
 	if len(q.QuoteType.Result) == 0 {
-		return nil, fmt.Errorf("empty result for QuoteType")
+		return nil, fmt.Errorf("empty result for ticker info")
 	}
 
 	r := q.QuoteType.Result[0]

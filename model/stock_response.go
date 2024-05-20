@@ -587,7 +587,7 @@ func (c *StockStatisticsBuilder) Build() *StockStatistics {
 	}
 }
 
-func NewCompanyStatisticsBuilder() *StockStatisticsBuilder {
+func NewStockStatisticsBuilder() *StockStatisticsBuilder {
 	return &StockStatisticsBuilder{}
 }
 
