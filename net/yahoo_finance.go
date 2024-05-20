@@ -33,8 +33,6 @@ func NewYahooFinanceDataProvider(c *http.Client) *YahooFinanceDataProvider {
 	}
 }
 
-// TODO: handle errors -> return response and error and let upstream handle it
-
 func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (*model.News, error) {
 	p := map[string][]string{
 		"count":        {"250"},
@@ -49,7 +47,10 @@ func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (*model.News
 		"region":       {"CA"},
 	}
 
-	u, _ := util.BuildURL(fmt.Sprintf("https://%s", yFMediaURL), "/api/v2/gql/stream_view", p)
+	u, err := util.BuildURL(fmt.Sprintf("https://%s", yFMediaURL), "/api/v2/gql/stream_view", p)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := y.verifyYahooFinanceCookie(u); err != nil {
 		return nil, err
@@ -60,7 +61,9 @@ func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (*model.News
 	h.Set(util.AcceptHeader, util.ContentTypeJSON)
 
 	cn := &yahoo.CompanyNews{}
-	util.FetchAndDecode(y.client, u, http.MethodGet, h, cn)
+	if err := util.FetchAndDecode(y.client, u, http.MethodGet, h, cn); err != nil {
+		return nil, err
+	}
 
 	if len(cn.Data.TickerStream.Pagination.Uuids) == 0 {
 		return nil, fmt.Errorf("empty result for company news")
@@ -80,7 +83,9 @@ func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (*model.News
 		set[match[1]] = nil
 	}
 
-	y.retrieveArticle(set)
+	if err := y.retrieveArticle(set); err != nil {
+		return nil, err
+	}
 
 	n := make(model.News, 0, len(set))
 	for _, v := range set {
@@ -99,7 +104,10 @@ func (y *YahooFinanceDataProvider) retrieveArticle(s ArticleSet) error {
 		"bot":    {"0"},
 	}
 
-	u, _ := util.BuildURL(fmt.Sprintf("https://%s", yFBaseURL), "/caas/content/article", p)
+	u, err := util.BuildURL(fmt.Sprintf("https://%s", yFBaseURL), "/caas/content/article", p)
+	if err != nil {
+		return err
+	}
 
 	if err := y.verifyYahooFinanceCookie(u); err != nil {
 		return err
@@ -117,7 +125,9 @@ func (y *YahooFinanceDataProvider) retrieveArticle(s ArticleSet) error {
 		u.RawQuery = cr.Encode()
 
 		ya := &yahoo.Article{}
-		util.FetchAndDecode(y.client, u, http.MethodGet, h, ya)
+		if err := util.FetchAndDecode(y.client, u, http.MethodGet, h, ya); err != nil {
+			fmt.Printf("unable to fetch %s: %s", u, err)
+		}
 
 		if len(ya.Items) == 0 {
 			fmt.Println("no data for article uuid", uuid)
@@ -140,7 +150,10 @@ func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model
 		"modules":   {"summaryProfile,details"},
 	}
 
-	u, _ := util.BuildURL(fmt.Sprintf("https://%s", yFQuery2URL), fmt.Sprintf("/v10/finance/quoteSummary/%s", ticker), p)
+	u, err := util.BuildURL(fmt.Sprintf("https://%s", yFQuery2URL), fmt.Sprintf("/v10/finance/quoteSummary/%s", ticker), p)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := y.verifyYahooFinanceCookie(u); err != nil {
 		return nil, err
@@ -182,7 +195,10 @@ func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*mode
 		"modules":   {"defaultKeyStatistics,financialData"},
 	}
 
-	u, _ := util.BuildURL(fmt.Sprintf("https://%s", yFQuery2URL), fmt.Sprintf("/v10/finance/quoteSummary/%s", ticker), p)
+	u, err := util.BuildURL(fmt.Sprintf("https://%s", yFQuery2URL), fmt.Sprintf("/v10/finance/quoteSummary/%s", ticker), p)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := y.verifyYahooFinanceCookie(u); err != nil {
 		return nil, err
@@ -202,7 +218,9 @@ func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*mode
 	h.Set(util.AcceptHeader, util.ContentTypeJSON)
 
 	cs := &yahoo.CompanyStatistics{}
-	util.FetchAndDecode(y.client, u, http.MethodGet, h, cs)
+	if err := util.FetchAndDecode(y.client, u, http.MethodGet, h, cs); err != nil {
+		return nil, err
+	}
 
 	if len(cs.QuoteSummary.Result) == 0 {
 		return nil, fmt.Errorf("empty result for company statistics")
@@ -230,7 +248,10 @@ func (y *YahooFinanceDataProvider) RetrieveStockPrices(ticker string, start, end
 		"period2":   {strconv.FormatInt(end.Unix(), 10)},
 	}
 
-	u, _ := util.BuildURL(fmt.Sprintf("https://%s", yFQuery2URL), fmt.Sprintf("/v8/finance/chart/%s", ticker), p)
+	u, err := util.BuildURL(fmt.Sprintf("https://%s", yFQuery2URL), fmt.Sprintf("/v8/finance/chart/%s", ticker), p)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := y.verifyYahooFinanceCookie(u); err != nil {
 		return nil, err
@@ -241,7 +262,9 @@ func (y *YahooFinanceDataProvider) RetrieveStockPrices(ticker string, start, end
 	h.Set(util.AcceptHeader, util.ContentTypeJSON)
 
 	s := &yahoo.EndOfDay{}
-	util.FetchAndDecode(y.client, u, http.MethodGet, h, s)
+	if err := util.FetchAndDecode(y.client, u, http.MethodGet, h, s); err != nil {
+		return nil, err
+	}
 
 	if len(s.Chart.Result) == 0 {
 		return nil, fmt.Errorf("empty result for EndOfDay")
@@ -252,7 +275,6 @@ func (y *YahooFinanceDataProvider) RetrieveStockPrices(ticker string, start, end
 	ac := s.Chart.Result[0].Indicators.Adjclose[0]
 
 	eod := make(model.EndOfDayPrices, len(t))
-
 	for i := range t {
 		s := model.NewStockPriceBuilder().Time(t[i].Time).High(q.High[i]).Low(q.Low[i]).Open(q.Open[i]).Close(ac.Close[i]).Volume(q.Volume[i]).Build()
 		eod[i] = s
@@ -268,7 +290,10 @@ func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*mode
 		"region":    {"CA"},
 	}
 
-	u, _ := util.BuildURL(fmt.Sprintf("https://%s", yFQuery1URL), fmt.Sprintf("/v1/finance/quoteType/%s", ticker), p)
+	u, err := util.BuildURL(fmt.Sprintf("https://%s", yFQuery1URL), fmt.Sprintf("/v1/finance/quoteType/%s", ticker), p)
+	if err != nil {
+		return nil, err
+	}
 
 	h := http.Header{}
 	h.Set(util.HostHeader, yFQuery1URL)
@@ -290,7 +315,10 @@ func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*mode
 }
 
 func (y *YahooFinanceDataProvider) getCrumb() (string, error) {
-	u, _ := util.BuildURL(fmt.Sprintf("https://%s", yFQuery2URL), "/v1/test/getcrumb", nil)
+	u, err := util.BuildURL(fmt.Sprintf("https://%s", yFQuery2URL), "/v1/test/getcrumb", nil)
+	if err != nil {
+		return "", err
+	}
 
 	h := http.Header{}
 	h.Set(util.AcceptHeader, "*/*")
@@ -305,8 +333,13 @@ func (y *YahooFinanceDataProvider) getCrumb() (string, error) {
 }
 
 func (y *YahooFinanceDataProvider) verifyYahooFinanceCookie(targetUrl *url.URL) error {
-	cu, _ := util.BuildURL(fmt.Sprintf("https://%s", yFBaseURL), "", nil)
-	if err := util.VerifyCookie(y.client, targetUrl, cu); err != nil {
+	cu, err := util.BuildURL(fmt.Sprintf("https://%s", yFBaseURL), "", nil)
+	if err != nil {
+		return err
+	}
+	h := http.Header{}
+	h.Set(util.AcceptHeader, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
+	if err := util.VerifyCookie(y.client, targetUrl, cu, h); err != nil {
 		return err
 	}
 

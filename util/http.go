@@ -65,7 +65,11 @@ func FetchAndDecode(c *http.Client, u *url.URL, method string, h http.Header, ta
 
 	// TODO: implement back off for status 429 - Too Many Requests
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("%s returned non-200 status: %d", res.Request.URL.String(), res.StatusCode)
+		b, err := io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("%s returned non-200 status: %d body: %s", res.Request.URL.String(), res.StatusCode, string(b))
 	}
 
 	// target is nil when the decoding is not needed - i.e. retrieving cookie
@@ -106,7 +110,7 @@ func DecodeJSONContentType(r io.Reader, target interface{}) error {
 	return nil
 }
 
-func VerifyCookie(c *http.Client, targetUrl, cookieUrl *url.URL) error {
+func VerifyCookie(c *http.Client, targetUrl, cookieUrl *url.URL, h http.Header) error {
 	cs := c.Jar.Cookies(targetUrl)
 	e := len(cs) == 0
 	for _, cookie := range cs {
@@ -117,9 +121,6 @@ func VerifyCookie(c *http.Client, targetUrl, cookieUrl *url.URL) error {
 	}
 
 	if e {
-		h := http.Header{}
-		h.Set(AcceptHeader, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
-
 		if err := FetchAndDecode(c, cookieUrl, http.MethodGet, h, nil); err != nil {
 			return nil
 		}

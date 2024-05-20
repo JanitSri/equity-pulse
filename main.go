@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"os"
-	"time"
 
 	"github.com/JanitSri/equity-pulse/model"
 	"github.com/JanitSri/equity-pulse/net"
@@ -31,13 +30,13 @@ func main() {
 
 	e := service.NewEquityService(y)
 
-	start, _ := time.Parse(time.RFC3339, "2024-05-13T00:00:00-04:00")
-	end, _ := time.Parse(time.RFC3339, "2024-05-18T00:00:00-04:00")
-	r, err := e.EndOfDayStockPrices(er, start, end)
+	// start, _ := time.Parse(time.RFC3339, "2024-05-13T00:00:00-04:00")
+	// end, _ := time.Parse(time.RFC3339, "2024-05-18T00:00:00-04:00")
+	// r, err := e.EndOfDayStockPrices(er, start, end)
 
 	// r, err := e.CompanyProfile(er)
 
-	// r, err := e.StockTickerInfo(er)
+	r, err := e.StockTickerInfo(er)
 
 	// r, err := e.StockStatistics(er)
 
