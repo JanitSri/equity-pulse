@@ -1,8 +1,9 @@
 package util
 
 import (
-	"fmt"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 const (
@@ -29,14 +30,21 @@ const (
 )
 
 // TODO: write unit tests
-func FormatDate(date time.Time, timeZone string) string {
+func FormatDate(date time.Time, timeZone, layout string) string {
 	loc, err := time.LoadLocation(timeZone)
 	if err != nil {
-		fmt.Println("Error loading time zone:", err)
+		zap.L().Sugar().Errorf("could not load time zone: %s", err)
 		loc, _ = time.LoadLocation(TimeZoneUTC)
-		fmt.Println("Using default time zone:", loc)
+		zap.L().Sugar().Infof("using default time zone: %s", loc)
 	}
 
 	updatedTimeZone := date.In(loc)
-	return updatedTimeZone.Format(time.RFC1123)
+	output := updatedTimeZone.Format(layout)
+	if output == layout {
+		zap.L().Sugar().Errorf("could not use layout: %s", layout)
+		output = updatedTimeZone.Format(time.RFC1123)
+		zap.L().Sugar().Info("using default layout: RFC1123")
+	}
+
+	return output
 }

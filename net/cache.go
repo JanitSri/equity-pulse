@@ -6,6 +6,7 @@ package net
 //       the cache should be checked at the net level (data provider) not at the service level (still needs to think about this)
 //     - current option is use LevelDB
 //     - private struct and fields because will be used at net layer
+//     - redis & redis insight
 
 type ConnectionConfig struct {
 	ConnectionString string

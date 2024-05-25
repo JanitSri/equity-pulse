@@ -1,18 +1,44 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
+	"strings"
 
 	"github.com/JanitSri/equity-pulse/model"
 	"github.com/JanitSri/equity-pulse/net"
 	"github.com/JanitSri/equity-pulse/service"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"golang.org/x/net/publicsuffix"
 )
 
-// TODO: add remove fmt and add logging
+func createLogger() *zap.Logger {
+	env := os.Getenv("APP_ENV")
+
+	c := zap.NewProductionEncoderConfig()
+	c.EncodeLevel = zapcore.CapitalLevelEncoder
+	c.TimeKey = "timestamp"
+	c.EncodeTime = zapcore.ISO8601TimeEncoder
+	c.MessageKey = "message"
+
+	cE := zapcore.NewJSONEncoder(c)
+	s := zapcore.AddSync(os.Stdout)
+
+	var core zapcore.Core
+	if strings.EqualFold(env, "PROD") {
+		core = zapcore.NewCore(cE, s, zap.NewAtomicLevelAt(zap.InfoLevel))
+	} else {
+		core = zapcore.NewCore(cE, s, zap.NewAtomicLevelAt(zap.DebugLevel))
+	}
+
+	return zap.New(core)
+}
+
+func init() {
+	zap.ReplaceGlobals(createLogger())
+}
 
 func main() {
 	// cmd.Execute()
@@ -43,9 +69,8 @@ func main() {
 	// r, err := e.StockNews(er)
 
 	if err != nil {
-		fmt.Println("<<<ERROR>>>", err)
-		os.Exit(1)
+		zap.L().Sugar().Fatal("something went wrong", zap.Error(err))
 	}
 
-	fmt.Printf("%+v\n", r)
+	zap.L().Sugar().Debugf("%+v", *r)
 }

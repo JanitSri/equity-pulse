@@ -38,7 +38,7 @@ type Meta struct {
 	DataGranularity      string               `json:"dataGranularity"`
 	ExchangeName         string               `json:"exchangeName"`
 	ExchangeTimezoneName string               `json:"exchangeTimezoneName"`
-	FiftyTwoWeekHigh     int64                `json:"fiftyTwoWeekHigh"`
+	FiftyTwoWeekHigh     float64              `json:"fiftyTwoWeekHigh"`
 	FiftyTwoWeekLow      float64              `json:"fiftyTwoWeekLow"`
 	FirstTradeDate       int64                `json:"firstTradeDate"`
 	FullExchangeName     string               `json:"fullExchangeName"`
@@ -47,7 +47,7 @@ type Meta struct {
 	InstrumentType       string               `json:"instrumentType"`
 	PriceHint            int64                `json:"priceHint"`
 	Range                string               `json:"range"`
-	RegularMarketDayHigh int64                `json:"regularMarketDayHigh"`
+	RegularMarketDayHigh float64              `json:"regularMarketDayHigh"`
 	RegularMarketDayLow  float64              `json:"regularMarketDayLow"`
 	RegularMarketPrice   float64              `json:"regularMarketPrice"`
 	RegularMarketTime    int64                `json:"regularMarketTime"`

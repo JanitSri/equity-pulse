@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 const (
@@ -28,7 +30,7 @@ type TextBodyResponse struct {
 func BuildURL(base, path string, params url.Values) (*url.URL, error) {
 	baseURL, err := url.Parse(base)
 	if err != nil {
-		fmt.Println("Error parsing base URL:", err)
+		zap.L().Sugar().Errorf("could not parse %s: %s", base, err)
 		return nil, err
 	}
 
@@ -94,7 +96,7 @@ func DecodeTextContentType(r io.Reader, target interface{}) error {
 		}
 		v.Body = string(b)
 	default:
-		fmt.Println("Did not match any text content type for decoding")
+		zap.L().Sugar().Error("did not match any content type for decoding")
 	}
 
 	return nil

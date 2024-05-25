@@ -11,6 +11,7 @@ import (
 	"github.com/JanitSri/equity-pulse/model"
 	"github.com/JanitSri/equity-pulse/model/yahoo"
 	"github.com/JanitSri/equity-pulse/util"
+	"go.uber.org/zap"
 )
 
 const (
@@ -34,6 +35,8 @@ func NewYahooFinanceDataProvider(c *http.Client) *YahooFinanceDataProvider {
 }
 
 func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (*model.News, error) {
+	zap.L().Sugar().Debugf("yahoo finance retrieving stock news for %s", ticker)
+
 	p := map[string][]string{
 		"count":        {"250"},
 		"namespace":    {"finance"},
@@ -118,7 +121,7 @@ func (y *YahooFinanceDataProvider) retrieveArticle(s ArticleSet) error {
 	h.Set(util.AcceptHeader, util.ContentTypeJSON)
 
 	for uuid := range s {
-		fmt.Println("Retrieving article uuid", uuid)
+		zap.L().Sugar().Debugf("Retrieving article uuid %s", uuid)
 		cr := u.Query()
 		cr.Del("uuid")
 		cr.Add("uuid", uuid)
@@ -126,11 +129,11 @@ func (y *YahooFinanceDataProvider) retrieveArticle(s ArticleSet) error {
 
 		ya := &yahoo.Article{}
 		if err := util.FetchAndDecode(y.client, u, http.MethodGet, h, ya); err != nil {
-			fmt.Printf("unable to fetch %s: %s", u, err)
+			zap.L().Sugar().Errorf("unable to fetch %s: %s", u, err)
 		}
 
 		if len(ya.Items) == 0 {
-			fmt.Println("no data for article uuid", uuid)
+			zap.L().Sugar().Errorf("no data for article uuid %s", uuid)
 			continue
 		}
 
@@ -143,6 +146,8 @@ func (y *YahooFinanceDataProvider) retrieveArticle(s ArticleSet) error {
 }
 
 func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model.CompanyProfile, error) {
+	zap.L().Sugar().Debugf("yahoo finance retrieving company profile for %s", ticker)
+
 	p := map[string][]string{
 		"formatted": {"true"},
 		"lang":      {"en-CA"},
@@ -188,6 +193,8 @@ func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model
 }
 
 func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*model.StockStatistics, error) {
+	zap.L().Sugar().Debugf("yahoo finance retrieving stock statistics for %s", ticker)
+
 	p := map[string][]string{
 		"formatted": {"true"},
 		"lang":      {"en-CA"},
@@ -232,6 +239,8 @@ func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*mode
 }
 
 func (y *YahooFinanceDataProvider) RetrieveStockPrices(ticker string, start, end time.Time, interval model.Interval) (*model.EndOfDayPrices, error) {
+	zap.L().Sugar().Debugf("yahoo finance retrieving stock prices for %s from %s to %s in %s interval", ticker, start, end, interval)
+
 	ic := model.NewIntervalConverter(interval)
 	i := ic.ConvertToYahooFinanceInterval()
 
@@ -284,6 +293,8 @@ func (y *YahooFinanceDataProvider) RetrieveStockPrices(ticker string, start, end
 }
 
 func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*model.TickerInfo, error) {
+	zap.L().Sugar().Debugf("yahoo finance retrieving stock ticker info for %s", ticker)
+
 	p := map[string][]string{
 		"formatted": {"true"},
 		"lang":      {"en-CA"},
@@ -315,6 +326,8 @@ func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*mode
 }
 
 func (y *YahooFinanceDataProvider) getCrumb() (string, error) {
+	zap.L().Sugar().Debug("yahoo finance retrieving crumb")
+
 	u, err := util.BuildURL(fmt.Sprintf("https://%s", yFQuery2URL), "/v1/test/getcrumb", nil)
 	if err != nil {
 		return "", err
@@ -333,6 +346,8 @@ func (y *YahooFinanceDataProvider) getCrumb() (string, error) {
 }
 
 func (y *YahooFinanceDataProvider) verifyYahooFinanceCookie(targetUrl *url.URL) error {
+	zap.L().Sugar().Debug("yahoo finance retrieving cookie")
+
 	cu, err := util.BuildURL(fmt.Sprintf("https://%s", yFBaseURL), "", nil)
 	if err != nil {
 		return err
