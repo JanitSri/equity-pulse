@@ -22,8 +22,6 @@ const (
 	yFMediaURL      = "ncp-gw-finance.media.yahoo.com"
 )
 
-type ArticleSet map[string]*model.Article
-
 type YahooFinanceDataProvider struct {
 	client *http.Client
 }
@@ -34,7 +32,7 @@ func NewYahooFinanceDataProvider(c *http.Client) *YahooFinanceDataProvider {
 	}
 }
 
-func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (*model.News, error) {
+func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (model.ArticleIds, error) {
 	zap.L().Sugar().Debugf("yahoo finance retrieving stock news for %s", ticker)
 
 	p := map[string][]string{
@@ -81,24 +79,25 @@ func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (*model.News
 
 	matches := re.FindAllStringSubmatch(r, -1)
 
-	set := make(ArticleSet)
-	for _, match := range matches {
-		set[match[1]] = nil
+	a := make(model.ArticleIds, len(matches))
+	m := make(map[string]bool)
+	for i, match := range matches {
+		if len(match) < 2 {
+			continue
+		}
+		if _, ok := m[match[1]]; ok {
+			continue
+		}
+		a[i] = match[1]
+		m[match[1]] = true
 	}
 
-	if err := y.retrieveArticle(set); err != nil {
-		return nil, err
-	}
-
-	n := make(model.News, 0, len(set))
-	for _, v := range set {
-		n = append(n, v)
-	}
-
-	return &n, nil
+	return a, nil
 }
 
-func (y *YahooFinanceDataProvider) retrieveArticle(s ArticleSet) error {
+func (y *YahooFinanceDataProvider) RetrieveArticle(id string) (*model.ArticleBuilder, error) {
+	zap.L().Sugar().Debugf("Retrieving yahoo finance article id %s", id)
+
 	p := map[string][]string{
 		"device": {"desktop"},
 		"site":   {"finance"},
@@ -109,43 +108,44 @@ func (y *YahooFinanceDataProvider) retrieveArticle(s ArticleSet) error {
 
 	u, err := util.BuildURL(fmt.Sprintf("https://%s", yFBaseURL), "/caas/content/article", p)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := y.verifyYahooFinanceCookie(u); err != nil {
-		return err
+		return nil, err
 	}
 
 	h := http.Header{}
 	h.Set(util.HostHeader, yFMediaURL)
 	h.Set(util.AcceptHeader, util.ContentTypeJSON)
 
-	for uuid := range s {
-		zap.L().Sugar().Debugf("Retrieving article uuid %s", uuid)
-		cr := u.Query()
-		cr.Del("uuid")
-		cr.Add("uuid", uuid)
-		u.RawQuery = cr.Encode()
+	cr := u.Query()
+	cr.Add("uuid", id)
+	u.RawQuery = cr.Encode()
 
-		ya := &yahoo.Article{}
-		if err := util.FetchAndDecode(y.client, u, http.MethodGet, h, ya); err != nil {
-			zap.L().Sugar().Errorf("unable to fetch %s: %s", u, err)
-		}
-
-		if len(ya.Items) == 0 {
-			zap.L().Sugar().Errorf("no data for article uuid %s", uuid)
-			continue
-		}
-
-		r := ya.Items[0]
-		a := model.NewArticleBuilder().Title(r.Schema.Default.Headline).Summary(r.Schema.Default.Description).Url(r.Schema.Default.MainEntityOfPage).DatePublished(r.Schema.Default.DatePublished).DateUpdated(r.Schema.Default.DateModified).Keywords(r.Schema.Default.Keywords).Build()
-		s[uuid] = a
+	ya := &yahoo.Article{}
+	if err := util.FetchAndDecode(y.client, u, http.MethodGet, h, ya); err != nil {
+		return nil, err
 	}
 
-	return nil
+	if len(ya.Items) == 0 {
+		return nil, fmt.Errorf("no data for article uuid %s", id)
+	}
+
+	r := ya.Items[0]
+	a := &model.ArticleBuilder{
+		Title:         r.Schema.Default.Headline,
+		Summary:       r.Schema.Default.Description,
+		Url:           r.Schema.Default.MainEntityOfPage,
+		DatePublished: r.Schema.Default.DatePublished,
+		DateUpdated:   r.Schema.Default.DateModified,
+		Keywords:      r.Schema.Default.Keywords,
+	}
+
+	return a, nil
 }
 
-func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model.CompanyProfile, error) {
+func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model.CompanyProfileBuilder, error) {
 	zap.L().Sugar().Debugf("yahoo finance retrieving company profile for %s", ticker)
 
 	p := map[string][]string{
@@ -187,12 +187,25 @@ func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model
 	}
 
 	r := yc.QuoteSummary.Result[0]
-	cp := model.NewCompanyProfileBuilder().Address(r.SummaryProfile.Address1).City(r.SummaryProfile.City).State(r.SummaryProfile.State).Zip(r.SummaryProfile.Zip).Country(r.SummaryProfile.Country).Phone(r.SummaryProfile.Phone).Website(r.SummaryProfile.Website).Industry(r.SummaryProfile.Industry).Sector(r.SummaryProfile.Sector).LongBusinessSummary(r.SummaryProfile.LongBusinessSummary).FullTimeEmployee(uint32(r.SummaryProfile.FullTimeEmployees)).InvestorRelationWebsite(r.SummaryProfile.IrWebsite).Build()
+	cp := &model.CompanyProfileBuilder{
+		Address:                 r.SummaryProfile.Address1,
+		City:                    r.SummaryProfile.City,
+		State:                   r.SummaryProfile.State,
+		Zip:                     r.SummaryProfile.Zip,
+		Country:                 r.SummaryProfile.Country,
+		Phone:                   r.SummaryProfile.Phone,
+		Website:                 r.SummaryProfile.Website,
+		Industry:                r.SummaryProfile.Industry,
+		Sector:                  r.SummaryProfile.Sector,
+		LongBusinessSummary:     r.SummaryProfile.LongBusinessSummary,
+		FullTimeEmployee:        uint32(r.SummaryProfile.FullTimeEmployees),
+		InvestorRelationWebsite: r.SummaryProfile.IrWebsite,
+	}
 
 	return cp, nil
 }
 
-func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*model.StockStatistics, error) {
+func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*model.StockStatisticsBuilder, error) {
 	zap.L().Sugar().Debugf("yahoo finance retrieving stock statistics for %s", ticker)
 
 	p := map[string][]string{
@@ -234,7 +247,35 @@ func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*mode
 	}
 
 	r := cs.QuoteSummary.Result[0].DefaultKeyStatistics
-	s := model.NewStockStatisticsBuilder().FiftyTwoWeekChange(r.FiftyTwoWeekChange.Fmt).Beta(r.Beta.Fmt).BookValue(r.BookValue.Fmt).EnterpriseToEbitda(r.EnterpriseToEbitda.Fmt).EnterpriseToRevenue(r.EnterpriseToRevenue.Fmt).EnterpriseValue(r.EnterpriseValue.Fmt).FiveYearAverageReturn(r.FiveYearAverageReturn.Fmt).FloatShares(r.FloatShares.Fmt).ForwardEps(r.ForwardEps.Fmt).ForwardPE(r.ForwardPE.Fmt).HeldPercentInsiders(r.HeldPercentInsiders.Fmt).HeldPercentInstitutions(r.HeldPercentInstitutions.Fmt).ImpliedSharesOutstanding(r.ImpliedSharesOutstanding.Fmt).LastDividendDate(r.LastDividendDate.Fmt).LastDividendValue(r.LastDividendValue.Fmt).NetIncomeToCommon(r.NetIncomeToCommon.Fmt).PegRatio(r.PegRatio.Fmt).PriceToBook(r.PriceToBook.Fmt).ProfitMargins(r.ProfitMargins.Fmt).RevenueQuarterlyGrowth(r.RevenueQuarterlyGrowth.Fmt).SharesOutstanding(r.SharesOutstanding.Fmt).SharesShort(r.SharesShort.Fmt).ShortRatio(r.ShortRatio.Fmt).TotalAssets(r.TotalAssets.Fmt).TrailingEps(r.TrailingEps.Fmt).Yield(r.Yield.Fmt).YtdReturn(r.YtdReturn.Fmt).Build()
+	s := &model.StockStatisticsBuilder{
+		FiftyTwoWeekChange:       r.FiftyTwoWeekChange.Fmt,
+		Beta:                     r.Beta.Fmt,
+		BookValue:                r.BookValue.Fmt,
+		EnterpriseToEbitda:       r.EnterpriseToEbitda.Fmt,
+		EnterpriseToRevenue:      r.EnterpriseToRevenue.Fmt,
+		EnterpriseValue:          r.EnterpriseValue.Fmt,
+		FiveYearAverageReturn:    r.FiveYearAverageReturn.Fmt,
+		FloatShares:              r.FloatShares.Fmt,
+		ForwardEps:               r.ForwardEps.Fmt,
+		ForwardPE:                r.ForwardPE.Fmt,
+		HeldPercentInsiders:      r.HeldPercentInsiders.Fmt,
+		HeldPercentInstitutions:  r.HeldPercentInstitutions.Fmt,
+		ImpliedSharesOutstanding: r.ImpliedSharesOutstanding.Fmt,
+		LastDividendDate:         r.LastDividendDate.Fmt,
+		LastDividendValue:        r.LastDividendValue.Fmt,
+		NetIncomeToCommon:        r.NetIncomeToCommon.Fmt,
+		PegRatio:                 r.PegRatio.Fmt,
+		PriceToBook:              r.PriceToBook.Fmt,
+		ProfitMargins:            r.ProfitMargins.Fmt,
+		RevenueQuarterlyGrowth:   r.RevenueQuarterlyGrowth.Fmt,
+		SharesOutstanding:        r.SharesOutstanding.Fmt,
+		SharesShort:              r.SharesShort.Fmt,
+		ShortRatio:               r.ShortRatio.Fmt,
+		TotalAssets:              r.TotalAssets.Fmt,
+		TrailingEps:              r.TrailingEps.Fmt,
+		Yield:                    r.Yield.Fmt,
+		YtdReturn:                r.YtdReturn.Fmt,
+	}
 	return s, nil
 }
 
@@ -292,7 +333,7 @@ func (y *YahooFinanceDataProvider) RetrieveStockPrices(ticker string, start, end
 	return &eod, nil
 }
 
-func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*model.TickerInfo, error) {
+func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*model.TickerInfoBuilder, error) {
 	zap.L().Sugar().Debugf("yahoo finance retrieving stock ticker info for %s", ticker)
 
 	p := map[string][]string{
@@ -320,7 +361,13 @@ func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*mode
 	}
 
 	r := q.QuoteType.Result[0]
-	t := model.NewTickerInfoBuilder().Symbol(r.Symbol).Exchange(r.Exchange).QuoteType(r.QuoteType).LongName(r.LongName).ShortName(r.ShortName).Build()
+	t := &model.TickerInfoBuilder{
+		Symbol:    r.Symbol,
+		Exchange:  r.Exchange,
+		QuoteType: r.QuoteType,
+		LongName:  r.LongName,
+		ShortName: r.ShortName,
+	}
 
 	return t, nil
 }

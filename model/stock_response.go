@@ -4,6 +4,8 @@ import (
 	"time"
 )
 
+type ArticleIds []string
+
 type Article struct {
 	title         string
 	summary       string
@@ -43,64 +45,25 @@ func (n *Article) Keywords() []string {
 }
 
 type ArticleBuilder struct {
-	title         string
-	summary       string
-	url           string
-	author        string
-	datePublished time.Time
-	dateUpdated   time.Time
-	keywords      []string
-}
-
-func (n *ArticleBuilder) Title(t string) *ArticleBuilder {
-	n.title = t
-	return n
-}
-
-func (n *ArticleBuilder) Summary(s string) *ArticleBuilder {
-	n.summary = s
-	return n
-}
-
-func (n *ArticleBuilder) Url(u string) *ArticleBuilder {
-	n.url = u
-	return n
-}
-
-func (n *ArticleBuilder) Author(a string) *ArticleBuilder {
-	n.author = a
-	return n
-}
-
-func (n *ArticleBuilder) DatePublished(d time.Time) *ArticleBuilder {
-	n.datePublished = d
-	return n
-}
-
-func (n *ArticleBuilder) DateUpdated(d time.Time) *ArticleBuilder {
-	n.dateUpdated = d
-	return n
-}
-
-func (n *ArticleBuilder) Keywords(d []string) *ArticleBuilder {
-	n.keywords = d
-	return n
+	Title         string    `json:"title"`
+	Summary       string    `json:"summary"`
+	Url           string    `json:"url"`
+	Author        string    `json:"author"`
+	DatePublished time.Time `json:"datePublished"`
+	DateUpdated   time.Time `json:"dateUpdated"`
+	Keywords      []string  `json:"keywords"`
 }
 
 func (n *ArticleBuilder) Build() *Article {
 	return &Article{
-		title:         n.title,
-		summary:       n.summary,
-		url:           n.url,
-		author:        n.author,
-		datePublished: n.datePublished,
-		dateUpdated:   n.dateUpdated,
-		keywords:      n.keywords,
+		title:         n.Title,
+		summary:       n.Summary,
+		url:           n.Url,
+		author:        n.Author,
+		datePublished: n.DatePublished,
+		dateUpdated:   n.DateUpdated,
+		keywords:      n.Keywords,
 	}
-}
-
-func NewArticleBuilder() *ArticleBuilder {
-	return &ArticleBuilder{}
 }
 
 type News []*Article
@@ -169,99 +132,35 @@ func (c *CompanyProfile) InvestorRelationWebsite() string {
 }
 
 type CompanyProfileBuilder struct {
-	address                 string
-	city                    string
-	state                   string
-	zip                     string
-	country                 string
-	phone                   string
-	website                 string
-	industry                string
-	sector                  string
-	longBusinessSummary     string
-	fullTimeEmployee        uint32
-	investorRelationWebsite string
-}
-
-func (c *CompanyProfileBuilder) Address(a string) *CompanyProfileBuilder {
-	c.address = a
-	return c
-}
-
-func (c *CompanyProfileBuilder) City(ci string) *CompanyProfileBuilder {
-	c.city = ci
-	return c
-}
-
-func (c *CompanyProfileBuilder) State(s string) *CompanyProfileBuilder {
-	c.state = s
-	return c
-}
-
-func (c *CompanyProfileBuilder) Zip(z string) *CompanyProfileBuilder {
-	c.zip = z
-	return c
-}
-
-func (c *CompanyProfileBuilder) Country(co string) *CompanyProfileBuilder {
-	c.country = co
-	return c
-}
-
-func (c *CompanyProfileBuilder) Phone(p string) *CompanyProfileBuilder {
-	c.phone = p
-	return c
-}
-
-func (c *CompanyProfileBuilder) Website(w string) *CompanyProfileBuilder {
-	c.website = w
-	return c
-}
-
-func (c *CompanyProfileBuilder) Industry(i string) *CompanyProfileBuilder {
-	c.industry = i
-	return c
-}
-
-func (c *CompanyProfileBuilder) Sector(s string) *CompanyProfileBuilder {
-	c.sector = s
-	return c
-}
-
-func (c *CompanyProfileBuilder) LongBusinessSummary(l string) *CompanyProfileBuilder {
-	c.longBusinessSummary = l
-	return c
-}
-
-func (c *CompanyProfileBuilder) FullTimeEmployee(f uint32) *CompanyProfileBuilder {
-	c.fullTimeEmployee = f
-	return c
-}
-
-func (c *CompanyProfileBuilder) InvestorRelationWebsite(i string) *CompanyProfileBuilder {
-	c.investorRelationWebsite = i
-	return c
+	Address                 string `json:"address"`
+	City                    string `json:"city"`
+	State                   string `json:"state"`
+	Zip                     string `json:"zip"`
+	Country                 string `json:"country"`
+	Phone                   string `json:"phone"`
+	Website                 string `json:"website"`
+	Industry                string `json:"industry"`
+	Sector                  string `json:"sector"`
+	LongBusinessSummary     string `json:"longBusinessSummary"`
+	FullTimeEmployee        uint32 `json:"fullTimeEmployee"`
+	InvestorRelationWebsite string `json:"investorRelationWebsite"`
 }
 
 func (c *CompanyProfileBuilder) Build() *CompanyProfile {
 	return &CompanyProfile{
-		address:                 c.address,
-		city:                    c.city,
-		state:                   c.state,
-		zip:                     c.zip,
-		country:                 c.country,
-		phone:                   c.phone,
-		website:                 c.website,
-		industry:                c.industry,
-		sector:                  c.sector,
-		longBusinessSummary:     c.longBusinessSummary,
-		fullTimeEmployee:        c.fullTimeEmployee,
-		investorRelationWebsite: c.investorRelationWebsite,
+		address:                 c.Address,
+		city:                    c.City,
+		state:                   c.State,
+		zip:                     c.Zip,
+		country:                 c.Country,
+		phone:                   c.Phone,
+		website:                 c.Website,
+		industry:                c.Industry,
+		sector:                  c.Sector,
+		longBusinessSummary:     c.LongBusinessSummary,
+		fullTimeEmployee:        c.FullTimeEmployee,
+		investorRelationWebsite: c.InvestorRelationWebsite,
 	}
-}
-
-func NewCompanyProfileBuilder() *CompanyProfileBuilder {
-	return &CompanyProfileBuilder{}
 }
 
 type StockStatistics struct {
@@ -403,204 +302,65 @@ func (c *StockStatistics) YtdReturn() string {
 }
 
 type StockStatisticsBuilder struct {
-	fiftyTwoWeekChange       string
-	beta                     string
-	bookValue                string
-	enterpriseToEbitda       string
-	enterpriseToRevenue      string
-	enterpriseValue          string
-	fiveYearAverageReturn    string
-	floatShares              string
-	forwardEps               string
-	forwardPE                string
-	heldPercentInsiders      string
-	heldPercentInstitutions  string
-	impliedSharesOutstanding string
-	lastDividendDate         string
-	lastDividendValue        string
-	netIncomeToCommon        string
-	pegRatio                 string
-	priceToBook              string
-	profitMargins            string
-	revenueQuarterlyGrowth   string
-	sharesOutstanding        string
-	sharesShort              string
-	shortRatio               string
-	totalAssets              string
-	trailingEps              string
-	yield                    string
-	ytdReturn                string
-}
-
-func (c *StockStatisticsBuilder) FiftyTwoWeekChange(f string) *StockStatisticsBuilder {
-	c.fiftyTwoWeekChange = f
-	return c
-}
-
-func (c *StockStatisticsBuilder) Beta(b string) *StockStatisticsBuilder {
-	c.beta = b
-	return c
-}
-
-func (c *StockStatisticsBuilder) BookValue(b string) *StockStatisticsBuilder {
-	c.bookValue = b
-	return c
-}
-
-func (c *StockStatisticsBuilder) EnterpriseToEbitda(e string) *StockStatisticsBuilder {
-	c.enterpriseToEbitda = e
-	return c
-}
-
-func (c *StockStatisticsBuilder) EnterpriseToRevenue(e string) *StockStatisticsBuilder {
-	c.enterpriseToRevenue = e
-	return c
-}
-
-func (c *StockStatisticsBuilder) EnterpriseValue(e string) *StockStatisticsBuilder {
-	c.enterpriseValue = e
-	return c
-}
-
-func (c *StockStatisticsBuilder) FiveYearAverageReturn(f string) *StockStatisticsBuilder {
-	c.fiveYearAverageReturn = f
-	return c
-}
-
-func (c *StockStatisticsBuilder) FloatShares(f string) *StockStatisticsBuilder {
-	c.floatShares = f
-	return c
-}
-
-func (c *StockStatisticsBuilder) ForwardEps(f string) *StockStatisticsBuilder {
-	c.forwardEps = f
-	return c
-}
-
-func (c *StockStatisticsBuilder) ForwardPE(f string) *StockStatisticsBuilder {
-	c.forwardPE = f
-	return c
-}
-
-func (c *StockStatisticsBuilder) HeldPercentInsiders(h string) *StockStatisticsBuilder {
-	c.heldPercentInsiders = h
-	return c
-}
-
-func (c *StockStatisticsBuilder) HeldPercentInstitutions(h string) *StockStatisticsBuilder {
-	c.heldPercentInstitutions = h
-	return c
-}
-
-func (c *StockStatisticsBuilder) ImpliedSharesOutstanding(i string) *StockStatisticsBuilder {
-	c.impliedSharesOutstanding = i
-	return c
-}
-
-func (c *StockStatisticsBuilder) LastDividendDate(l string) *StockStatisticsBuilder {
-	c.lastDividendDate = l
-	return c
-}
-
-func (c *StockStatisticsBuilder) LastDividendValue(l string) *StockStatisticsBuilder {
-	c.lastDividendValue = l
-	return c
-}
-
-func (c *StockStatisticsBuilder) NetIncomeToCommon(n string) *StockStatisticsBuilder {
-	c.netIncomeToCommon = n
-	return c
-}
-
-func (c *StockStatisticsBuilder) PegRatio(p string) *StockStatisticsBuilder {
-	c.pegRatio = p
-	return c
-}
-
-func (c *StockStatisticsBuilder) PriceToBook(p string) *StockStatisticsBuilder {
-	c.priceToBook = p
-	return c
-}
-
-func (c *StockStatisticsBuilder) ProfitMargins(p string) *StockStatisticsBuilder {
-	c.profitMargins = p
-	return c
-}
-
-func (c *StockStatisticsBuilder) RevenueQuarterlyGrowth(r string) *StockStatisticsBuilder {
-	c.revenueQuarterlyGrowth = r
-	return c
-}
-
-func (c *StockStatisticsBuilder) SharesOutstanding(s string) *StockStatisticsBuilder {
-	c.sharesOutstanding = s
-	return c
-}
-
-func (c *StockStatisticsBuilder) SharesShort(s string) *StockStatisticsBuilder {
-	c.sharesShort = s
-	return c
-}
-
-func (c *StockStatisticsBuilder) ShortRatio(s string) *StockStatisticsBuilder {
-	c.shortRatio = s
-	return c
-}
-
-func (c *StockStatisticsBuilder) TotalAssets(t string) *StockStatisticsBuilder {
-	c.totalAssets = t
-	return c
-}
-
-func (c *StockStatisticsBuilder) TrailingEps(t string) *StockStatisticsBuilder {
-	c.trailingEps = t
-	return c
-}
-
-func (c *StockStatisticsBuilder) Yield(y string) *StockStatisticsBuilder {
-	c.yield = y
-	return c
-}
-
-func (c *StockStatisticsBuilder) YtdReturn(y string) *StockStatisticsBuilder {
-	c.ytdReturn = y
-	return c
+	FiftyTwoWeekChange       string `json:"fiftyTwoWeekChange"`
+	Beta                     string `json:"beta"`
+	BookValue                string `json:"bookValue"`
+	EnterpriseToEbitda       string `json:"enterpriseToEbitda"`
+	EnterpriseToRevenue      string `json:"enterpriseToRevenue"`
+	EnterpriseValue          string `json:"enterpriseValue"`
+	FiveYearAverageReturn    string `json:"fiveYearAverageReturn"`
+	FloatShares              string `json:"floatShares"`
+	ForwardEps               string `json:"forwardEps"`
+	ForwardPE                string `json:"forwardPE"`
+	HeldPercentInsiders      string `json:"heldPercentInsiders"`
+	HeldPercentInstitutions  string `json:"heldPercentInstitutions"`
+	ImpliedSharesOutstanding string `json:"impliedSharesOutstanding"`
+	LastDividendDate         string `json:"lastDividendDate"`
+	LastDividendValue        string `json:"lastDividendValue"`
+	NetIncomeToCommon        string `json:"netIncomeToCommon"`
+	PegRatio                 string `json:"pegRatio"`
+	PriceToBook              string `json:"priceToBook"`
+	ProfitMargins            string `json:"profitMargins"`
+	RevenueQuarterlyGrowth   string `json:"revenueQuarterlyGrowth"`
+	SharesOutstanding        string `json:"sharesOutstanding"`
+	SharesShort              string `json:"sharesShort"`
+	ShortRatio               string `json:"shortRatio"`
+	TotalAssets              string `json:"totalAssets"`
+	TrailingEps              string `json:"trailingEps"`
+	Yield                    string `json:"yield"`
+	YtdReturn                string `json:"ytdReturn"`
 }
 
 func (c *StockStatisticsBuilder) Build() *StockStatistics {
 	return &StockStatistics{
-		fiftyTwoWeekChange:       c.fiftyTwoWeekChange,
-		beta:                     c.beta,
-		bookValue:                c.bookValue,
-		enterpriseToEbitda:       c.enterpriseToEbitda,
-		enterpriseToRevenue:      c.enterpriseToRevenue,
-		enterpriseValue:          c.enterpriseValue,
-		fiveYearAverageReturn:    c.fiveYearAverageReturn,
-		floatShares:              c.floatShares,
-		forwardEps:               c.forwardEps,
-		forwardPE:                c.forwardPE,
-		heldPercentInsiders:      c.heldPercentInsiders,
-		heldPercentInstitutions:  c.heldPercentInstitutions,
-		impliedSharesOutstanding: c.impliedSharesOutstanding,
-		lastDividendDate:         c.lastDividendDate,
-		lastDividendValue:        c.lastDividendValue,
-		netIncomeToCommon:        c.netIncomeToCommon,
-		pegRatio:                 c.pegRatio,
-		priceToBook:              c.priceToBook,
-		profitMargins:            c.profitMargins,
-		revenueQuarterlyGrowth:   c.revenueQuarterlyGrowth,
-		sharesOutstanding:        c.sharesOutstanding,
-		sharesShort:              c.sharesShort,
-		shortRatio:               c.shortRatio,
-		totalAssets:              c.totalAssets,
-		trailingEps:              c.trailingEps,
-		yield:                    c.yield,
-		ytdReturn:                c.ytdReturn,
+		fiftyTwoWeekChange:       c.FiftyTwoWeekChange,
+		beta:                     c.Beta,
+		bookValue:                c.BookValue,
+		enterpriseToEbitda:       c.EnterpriseToEbitda,
+		enterpriseToRevenue:      c.EnterpriseToRevenue,
+		enterpriseValue:          c.EnterpriseValue,
+		fiveYearAverageReturn:    c.FiveYearAverageReturn,
+		floatShares:              c.FloatShares,
+		forwardEps:               c.ForwardEps,
+		forwardPE:                c.ForwardPE,
+		heldPercentInsiders:      c.HeldPercentInsiders,
+		heldPercentInstitutions:  c.HeldPercentInstitutions,
+		impliedSharesOutstanding: c.ImpliedSharesOutstanding,
+		lastDividendDate:         c.LastDividendDate,
+		lastDividendValue:        c.LastDividendValue,
+		netIncomeToCommon:        c.NetIncomeToCommon,
+		pegRatio:                 c.PegRatio,
+		priceToBook:              c.PriceToBook,
+		profitMargins:            c.ProfitMargins,
+		revenueQuarterlyGrowth:   c.RevenueQuarterlyGrowth,
+		sharesOutstanding:        c.SharesOutstanding,
+		sharesShort:              c.SharesShort,
+		shortRatio:               c.ShortRatio,
+		totalAssets:              c.TotalAssets,
+		trailingEps:              c.TrailingEps,
+		yield:                    c.Yield,
+		ytdReturn:                c.YtdReturn,
 	}
-}
-
-func NewStockStatisticsBuilder() *StockStatisticsBuilder {
-	return &StockStatisticsBuilder{}
 }
 
 type SecurityPrice struct {
@@ -722,48 +482,19 @@ func (t *TickerInfo) LongName() string {
 }
 
 type TickerInfoBuilder struct {
-	symbol    string
-	quoteType string
-	exchange  string
-	shortName string
-	longName  string
-}
-
-func (t *TickerInfoBuilder) Symbol(s string) *TickerInfoBuilder {
-	t.symbol = s
-	return t
-}
-
-func (t *TickerInfoBuilder) QuoteType(q string) *TickerInfoBuilder {
-	t.quoteType = q
-	return t
-}
-
-func (t *TickerInfoBuilder) Exchange(e string) *TickerInfoBuilder {
-	t.exchange = e
-	return t
-}
-
-func (t *TickerInfoBuilder) ShortName(s string) *TickerInfoBuilder {
-	t.shortName = s
-	return t
-}
-
-func (t *TickerInfoBuilder) LongName(l string) *TickerInfoBuilder {
-	t.longName = l
-	return t
+	Symbol    string `json:"symbol"`
+	QuoteType string `json:"quoteType"`
+	Exchange  string `json:"exchange"`
+	ShortName string `json:"shortName"`
+	LongName  string `json:"longName"`
 }
 
 func (t *TickerInfoBuilder) Build() *TickerInfo {
 	return &TickerInfo{
-		symbol:    t.symbol,
-		quoteType: t.quoteType,
-		exchange:  t.exchange,
-		longName:  t.longName,
-		shortName: t.shortName,
+		symbol:    t.Symbol,
+		quoteType: t.QuoteType,
+		exchange:  t.Exchange,
+		longName:  t.LongName,
+		shortName: t.ShortName,
 	}
-}
-
-func NewTickerInfoBuilder() *TickerInfoBuilder {
-	return &TickerInfoBuilder{}
 }

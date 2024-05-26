@@ -1,7 +1,6 @@
 package util
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -85,31 +84,6 @@ func FetchAndDecode(c *http.Client, u *url.URL, method string, h http.Header, ta
 	}
 
 	return dErr
-}
-
-func DecodeTextContentType(r io.Reader, target interface{}) error {
-	switch v := target.(type) {
-	case *TextBodyResponse:
-		b, err := io.ReadAll(r)
-		if err != nil {
-			return err
-		}
-		v.Body = string(b)
-	default:
-		zap.L().Sugar().Error("did not match any content type for decoding")
-	}
-
-	return nil
-}
-
-func DecodeJSONContentType(r io.Reader, target interface{}) error {
-	d := json.NewDecoder(r)
-	err := d.Decode(target)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func VerifyCookie(c *http.Client, targetUrl, cookieUrl *url.URL, h http.Header) error {

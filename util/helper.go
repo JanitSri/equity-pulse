@@ -1,6 +1,8 @@
 package util
 
 import (
+	"encoding/json"
+	"io"
 	"time"
 
 	"go.uber.org/zap"
@@ -47,4 +49,37 @@ func FormatDate(date time.Time, timeZone, layout string) string {
 	}
 
 	return output
+}
+
+func DecodeTextContentType(r io.Reader, target interface{}) error {
+	switch v := target.(type) {
+	case *TextBodyResponse:
+		b, err := io.ReadAll(r)
+		if err != nil {
+			return err
+		}
+		v.Body = string(b)
+	default:
+		zap.L().Sugar().Error("did not match any content type for decoding")
+	}
+
+	return nil
+}
+
+func DecodeJSONContentType(r io.Reader, target interface{}) error {
+	d := json.NewDecoder(r)
+	err := d.Decode(target)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ToJSONString(i interface{}) (string, error) {
+	jsonBytes, err := json.Marshal(i)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonBytes), nil
 }

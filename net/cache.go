@@ -1,22 +1,44 @@
 package net
 
-// TODO:
-//     - implement cache interface and structs
-//     - maybe create a response object that stores the response and time retrieved, can be used for caching and rate limiting
-//       the cache should be checked at the net level (data provider) not at the service level (still needs to think about this)
-//     - current option is use LevelDB
-//     - private struct and fields because will be used at net layer
-//     - redis & redis insight
+import (
+	"context"
+	"time"
 
-type ConnectionConfig struct {
-	ConnectionString string
-	Timeout          int
-	MaxRetries       int
-}
+	"github.com/redis/go-redis/v9"
+)
 
 type Cache interface {
-	connect(c ConnectionConfig) error
-	get(key string) (string, error)
-	put(key string) (string, error)
-	delete(key string) error
+	CheckConnection(ctx context.Context) (string, error)
+	Get(ctx context.Context, key string) (string, error)
+	Set(ctx context.Context, key string, val string, exp time.Duration) error
+}
+
+type RedisCache struct {
+	client *redis.Client
+}
+
+func NewRedisCache(rOpts *redis.Options) *RedisCache {
+	return &RedisCache{
+		client: redis.NewClient(rOpts),
+	}
+}
+
+func (r *RedisCache) CheckConnection(ctx context.Context) (string, error) {
+	return r.client.Ping(ctx).Result()
+}
+
+func (r *RedisCache) Get(ctx context.Context, key string) (string, error) {
+	val, err := r.client.Get(ctx, key).Result()
+	if err != nil {
+		return "", err
+	}
+
+	return val, err
+}
+
+func (r *RedisCache) Set(ctx context.Context, key string, val string, exp time.Duration) error {
+	if err := r.client.Set(ctx, key, val, exp).Err(); err != nil {
+		return err
+	}
+	return nil
 }

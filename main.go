@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"github.com/JanitSri/equity-pulse/model"
 	"github.com/JanitSri/equity-pulse/net"
 	"github.com/JanitSri/equity-pulse/service"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/net/publicsuffix"
@@ -45,6 +47,25 @@ func main() {
 
 	er := model.NewEquityRequestBuilder().Ticker("AAPL").Build()
 
+	ctx := context.Background()
+
+	opts := &redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	}
+
+	rC := net.NewRedisCache(opts)
+
+	pong, err := rC.CheckConnection(ctx)
+	if err != nil {
+		zap.L().Sugar().Errorf("could not connect to redis: %s", err)
+	} else {
+		zap.L().Sugar().Infof("connected to redis: %s", pong)
+	}
+
+	cs := service.NewCacheService(rC)
+
 	c := &http.Client{}
 	o := cookiejar.Options{
 		PublicSuffixList: publicsuffix.List,
@@ -54,7 +75,7 @@ func main() {
 
 	y := net.NewYahooFinanceDataProvider(c)
 
-	e := service.NewEquityService(y)
+	e := service.NewEquityService(y, cs)
 
 	// start, _ := time.Parse(time.RFC3339, "2024-05-13T00:00:00-04:00")
 	// end, _ := time.Parse(time.RFC3339, "2024-05-18T00:00:00-04:00")
