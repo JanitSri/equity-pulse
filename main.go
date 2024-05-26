@@ -6,6 +6,8 @@ import (
 	"net/http/cookiejar"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/JanitSri/equity-pulse/model"
 	"github.com/JanitSri/equity-pulse/net"
@@ -40,6 +42,12 @@ func createLogger() *zap.Logger {
 
 func init() {
 	zap.ReplaceGlobals(createLogger())
+}
+
+type Result struct {
+	Name   string
+	Result interface{}
+	Err    error
 }
 
 func main() {
@@ -77,21 +85,70 @@ func main() {
 
 	e := service.NewEquityService(y, cs)
 
-	// start, _ := time.Parse(time.RFC3339, "2024-05-13T00:00:00-04:00")
-	// end, _ := time.Parse(time.RFC3339, "2024-05-18T00:00:00-04:00")
-	// r, err := e.EndOfDayStockPrices(er, start, end)
+	var wg sync.WaitGroup
 
-	// r, err := e.CompanyProfile(er)
+	start := time.Now()
 
-	r, err := e.StockTickerInfo(er)
+	results := make(chan Result, 3)
 
-	// r, err := e.StockStatistics(er)
-
-	// r, err := e.StockNews(er)
-
-	if err != nil {
-		zap.L().Sugar().Fatal("something went wrong", zap.Error(err))
+	handleFunc := func(name string, fn func(*model.EquityRequest) (interface{}, error)) {
+		defer wg.Done()
+		result, err := fn(er)
+		results <- Result{Name: name, Result: result, Err: err}
 	}
 
-	zap.L().Sugar().Debugf("%+v", *r)
+	wg.Add(1)
+	go handleFunc("EndOfDayStockPrices", func(er *model.EquityRequest) (interface{}, error) {
+		start, _ := time.Parse(time.RFC3339, "2024-05-13T00:00:00-04:00")
+		end, _ := time.Parse(time.RFC3339, "2024-05-18T00:00:00-04:00")
+		return e.EndOfDayStockPrices(er, start, end)
+	})
+
+	wg.Add(1)
+	go handleFunc("CompanyProfile", func(er *model.EquityRequest) (interface{}, error) {
+		return e.CompanyProfile(er)
+	})
+
+	wg.Add(1)
+	go handleFunc("StockTickerInfo", func(er *model.EquityRequest) (interface{}, error) {
+		return e.StockTickerInfo(er)
+	})
+
+	wg.Add(1)
+	go handleFunc("StockNews", func(er *model.EquityRequest) (interface{}, error) {
+		return e.StockNews(er)
+	})
+
+	go func(s time.Time) {
+		wg.Wait()
+		totalElapsed := time.Since(s)
+		zap.L().Sugar().Infof("Total time for all goroutines: %s", totalElapsed)
+		close(results)
+	}(start)
+
+	for res := range results {
+		if res.Err != nil {
+			zap.L().Sugar().Errorf("%s: something went wrong: %v", res.Name, res.Err)
+		} else {
+			zap.L().Sugar().Debugf("%s: %+v", res.Name, res.Result)
+		}
+	}
 }
+
+// RUN TIMES (BEFORE PIPELINING):
+// 		1.  1.852192458s
+// 		2.  1.388701917s
+//      3.  985.604791ms
+// 		4.  1.28646025s
+// 		5.  1.405365292s
+// 		6.  1.423375542s
+// 		7.  1.617825417s
+// 		8.  1.635723666s
+// 		9.  1.318731083s
+// 		10. 1.449131792s
+//
+//  AVG TIME: 1.436 seconds
+//
+//
+// TODO: add redis pipelining commands
+//
