@@ -13,9 +13,6 @@ clean: tidy
 install: 
 	@go install	
 
-stock: install
-	equity-pulse stock $(ARGS)
-
 tidy:
 	@go mod tidy
 
@@ -24,3 +21,6 @@ compose-up:
 
 compose-down:
 	@docker-compose -f docker-compose.yaml down
+
+stock: install
+	equity-pulse stock $(ARGS)
