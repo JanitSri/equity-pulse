@@ -89,7 +89,7 @@ func main() {
 
 	start := time.Now()
 
-	results := make(chan Result, 3)
+	results := make(chan Result, 4)
 
 	handleFunc := func(name string, fn func(*model.EquityRequest) (interface{}, error)) {
 		defer wg.Done()
