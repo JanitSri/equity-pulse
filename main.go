@@ -6,7 +6,6 @@ import (
 	"net/http/cookiejar"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/JanitSri/equity-pulse/model"
@@ -85,70 +84,33 @@ func main() {
 
 	e := service.NewEquityService(y, cs)
 
-	var wg sync.WaitGroup
+	startTime := time.Now()
 
-	start := time.Now()
-
-	results := make(chan Result, 4)
-
-	handleFunc := func(name string, fn func(*model.EquityRequest) (interface{}, error)) {
-		defer wg.Done()
-		result, err := fn(er)
-		results <- Result{Name: name, Result: result, Err: err}
+	sn, err := e.StockNews(er)
+	if err != nil {
+		zap.L().Sugar().Errorf("StockNews err: %s", err)
 	}
+	zap.L().Sugar().Infof("StockNews res: %s", *sn)
 
-	wg.Add(1)
-	go handleFunc("EndOfDayStockPrices", func(er *model.EquityRequest) (interface{}, error) {
-		start, _ := time.Parse(time.RFC3339, "2024-05-13T00:00:00-04:00")
-		end, _ := time.Parse(time.RFC3339, "2024-05-18T00:00:00-04:00")
-		return e.EndOfDayStockPrices(er, start, end)
-	})
-
-	wg.Add(1)
-	go handleFunc("CompanyProfile", func(er *model.EquityRequest) (interface{}, error) {
-		return e.CompanyProfile(er)
-	})
-
-	wg.Add(1)
-	go handleFunc("StockTickerInfo", func(er *model.EquityRequest) (interface{}, error) {
-		return e.StockTickerInfo(er)
-	})
-
-	wg.Add(1)
-	go handleFunc("StockNews", func(er *model.EquityRequest) (interface{}, error) {
-		return e.StockNews(er)
-	})
-
-	go func(s time.Time) {
-		wg.Wait()
-		totalElapsed := time.Since(s)
-		zap.L().Sugar().Infof("Total time for all goroutines: %s", totalElapsed)
-		close(results)
-	}(start)
-
-	for res := range results {
-		if res.Err != nil {
-			zap.L().Sugar().Errorf("%s: something went wrong: %v", res.Name, res.Err)
-		} else {
-			zap.L().Sugar().Debugf("%s: %+v", res.Name, res.Result)
-		}
+	start, _ := time.Parse(time.RFC3339, "2024-05-13T00:00:00-04:00")
+	end, _ := time.Parse(time.RFC3339, "2024-05-18T00:00:00-04:00")
+	eod, err := e.EndOfDayStockPrices(er, start, end)
+	if err != nil {
+		zap.L().Sugar().Errorf("EndOfDayStockPrices err: %s", end)
 	}
+	zap.L().Sugar().Infof("EndOfDayStockPrices res: %s", *eod)
+
+	cp, err := e.CompanyProfile(er)
+	if err != nil {
+		zap.L().Sugar().Errorf("CompanyProfile err: %s", end)
+	}
+	zap.L().Sugar().Infof("CompanyProfile res: %s", *cp)
+
+	st, err := e.StockTickerInfo(er)
+	if err != nil {
+		zap.L().Sugar().Errorf("StockTickerInfo err: %s", end)
+	}
+	zap.L().Sugar().Infof("StockTickerInfo res: %s", *st)
+
+	zap.L().Sugar().Infof("Total time for all goroutines: %s", time.Since(startTime))
 }
-
-// RUN TIMES (BEFORE PIPELINING):
-// 		1.  1.852192458s
-// 		2.  1.388701917s
-//      3.  985.604791ms
-// 		4.  1.28646025s
-// 		5.  1.405365292s
-// 		6.  1.423375542s
-// 		7.  1.617825417s
-// 		8.  1.635723666s
-// 		9.  1.318731083s
-// 		10. 1.449131792s
-//
-//  AVG TIME: 1.436 seconds
-//
-//
-// TODO: add redis pipelining commands
-//

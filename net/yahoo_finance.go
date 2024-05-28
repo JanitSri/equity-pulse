@@ -79,16 +79,13 @@ func (y *YahooFinanceDataProvider) RetrieveStockNews(ticker string) (model.Artic
 
 	matches := re.FindAllStringSubmatch(r, -1)
 
-	a := make(model.ArticleIds, len(matches))
+	a := model.ArticleIds{}
 	m := make(map[string]bool)
-	for i, match := range matches {
-		if len(match) < 2 {
-			continue
-		}
+	for _, match := range matches {
 		if _, ok := m[match[1]]; ok {
 			continue
 		}
-		a[i] = match[1]
+		a = append(a, match[1])
 		m[match[1]] = true
 	}
 
