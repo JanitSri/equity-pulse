@@ -40,3 +40,5 @@ profile.out
 node_modules/
 
 /data/
+
+/**/testdata

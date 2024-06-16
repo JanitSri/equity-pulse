@@ -112,5 +112,5 @@ func main() {
 	}
 	zap.L().Sugar().Infof("StockTickerInfo res: %s", *st)
 
-	zap.L().Sugar().Infof("Total time for all goroutines: %s", time.Since(startTime))
+	zap.L().Sugar().Infof("Total time: %s", time.Since(startTime))
 }
