@@ -20,7 +20,7 @@ mockery:
 	docker run --rm -v "$$PWD":/src -w /src vektra/mockery ${ARGS}  # make mockery ARGS="--name StockDataProvider --dir /src/net"
 
 test: 
-	@go test ${ARGS}  # make test ARGS="-v ./..."
+	@go test ${ARGS}  # make test ARGS='-v ./... -tags="!ignoretest"'
 	
 test-report: 
 	@go test -v -coverprofile=${TEST_COVERAGE_REPORT} ${ARGS}  # make test-report ARGS="./..."

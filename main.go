@@ -62,7 +62,8 @@ func main() {
 		DB:       0,
 	}
 
-	rC := net.NewRedisCache(opts)
+	rClient := redis.NewClient(opts)
+	rC := net.NewRedisCache(rClient)
 
 	pong, err := rC.CheckConnection(ctx)
 	if err != nil {
