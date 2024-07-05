@@ -87,31 +87,42 @@ func main() {
 
 	startTime := time.Now()
 
+	// Stock News
 	sn, err := e.StockNews(er)
 	if err != nil {
 		zap.L().Sugar().Errorf("StockNews err: %s", err)
 	}
 	zap.L().Sugar().Infof("StockNews res: %s", *sn)
 
+	// EOD Prices
 	start, _ := time.Parse(time.RFC3339, "2024-05-13T00:00:00-04:00")
 	end, _ := time.Parse(time.RFC3339, "2024-05-18T00:00:00-04:00")
 	eod, err := e.EndOfDayStockPrices(er, start, end)
 	if err != nil {
-		zap.L().Sugar().Errorf("EndOfDayStockPrices err: %s", end)
+		zap.L().Sugar().Errorf("EndOfDayStockPrices err: %s", err)
 	}
 	zap.L().Sugar().Infof("EndOfDayStockPrices res: %s", *eod)
 
+	// Company Profile
 	cp, err := e.CompanyProfile(er)
 	if err != nil {
-		zap.L().Sugar().Errorf("CompanyProfile err: %s", end)
+		zap.L().Sugar().Errorf("CompanyProfile err: %s", err)
 	}
 	zap.L().Sugar().Infof("CompanyProfile res: %s", *cp)
 
+	// Ticker Info
 	st, err := e.StockTickerInfo(er)
 	if err != nil {
-		zap.L().Sugar().Errorf("StockTickerInfo err: %s", end)
+		zap.L().Sugar().Errorf("StockTickerInfo err: %s", err)
 	}
 	zap.L().Sugar().Infof("StockTickerInfo res: %s", *st)
+
+	// Stock Statistics
+	ss, err := e.StockStatistics(er)
+	if err != nil {
+		zap.L().Sugar().Errorf("StockStatistics err: %s", err)
+	}
+	zap.L().Sugar().Infof("StockStatistics res: %s", *ss)
 
 	zap.L().Sugar().Infof("Total time: %s", time.Since(startTime))
 }

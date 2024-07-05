@@ -180,7 +180,7 @@ func (y *YahooFinanceDataProvider) RetrieveCompanyProfile(ticker string) (*model
 	}
 
 	if len(yc.QuoteSummary.Result) == 0 {
-		return nil, fmt.Errorf("empty result for company profile")
+		return nil, fmt.Errorf("empty result for company profile: %s", yc.QuoteSummary.Error)
 	}
 
 	r := yc.QuoteSummary.Result[0]
@@ -240,7 +240,7 @@ func (y *YahooFinanceDataProvider) RetrieveStockStatistics(ticker string) (*mode
 	}
 
 	if len(cs.QuoteSummary.Result) == 0 {
-		return nil, fmt.Errorf("empty result for company statistics")
+		return nil, fmt.Errorf("empty result for company statistics: %s", cs.QuoteSummary.Error)
 	}
 
 	r := cs.QuoteSummary.Result[0].DefaultKeyStatistics
@@ -314,7 +314,7 @@ func (y *YahooFinanceDataProvider) RetrieveStockPrices(ticker string, start, end
 	}
 
 	if len(s.Chart.Result) == 0 {
-		return nil, fmt.Errorf("empty result for EndOfDay")
+		return nil, fmt.Errorf("empty result for EndOfDay: %s", s.Chart.Error)
 	}
 
 	t := s.Chart.Result[0].Timestamp
@@ -354,7 +354,7 @@ func (y *YahooFinanceDataProvider) RetrieveStockTickerInfo(ticker string) (*mode
 	}
 
 	if len(q.QuoteType.Result) == 0 {
-		return nil, fmt.Errorf("empty result for ticker info")
+		return nil, fmt.Errorf("empty result for ticker info: %s", q.QuoteType.Error)
 	}
 
 	r := q.QuoteType.Result[0]
